@@ -4,6 +4,26 @@
 #include <vector>
 #include <stdexcept>
 
+/* TO DO
+	
+	TRANSPOSE
+	IDENTITY 
+	DETERMINIANT
+	INVERSE
+	IS_SQUARE
+	IS_IDENTITY
+
+	NOWA KLASA MATRIX4: 
+
+	FUNKCJE OBROTU - ROT X/Y/Z 
+	TRANSLATION (X, Y, Z)
+
+	ZMIANA TCP - MATRIX4 *VECTOR3 
+
+	FOWARD KINEMATICS 
+	ITD.
+
+*/
 class Matrix {
 
 private: 
