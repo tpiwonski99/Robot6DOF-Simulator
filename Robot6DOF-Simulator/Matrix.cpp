@@ -1,0 +1,44 @@
+#include "Matrix.hpp"
+
+Matrix::Matrix(size_t rows, size_t cols) : rows_(rows), cols_(cols) {
+	elements_.resize(rows_);
+
+	for (auto& elem : elements_)
+	{
+		elem.assign(cols_, 0);
+	}
+}
+
+size_t Matrix::getRows() const { return rows_; }
+
+size_t Matrix::getCols() const { return cols_; }
+
+std::vector<double>& Matrix::operator[](size_t i) { return elements_[i]; }
+
+Matrix Matrix::operator+ (const Matrix& other) const {
+
+	if (rows_ != other.rows_ || cols_ != other.cols_)
+		throw std::runtime_error("[Matrix] Cannot add matrices of different dimensions.");
+
+	Matrix result(rows_, cols_);
+
+	for (size_t r = 0; r < rows_; r++)
+		for (size_t c = 0; c < cols_; c++)
+			result[r][c] = elements_[r][c] + other.elements_[r][c];
+
+	return result;
+}
+
+Matrix Matrix::operator- (const Matrix& other) const {
+
+	if (rows_ != other.rows_ || cols_ != other.cols_)
+		throw std::runtime_error("[Matrix] Cannot subtract matrices of different dimensions.");
+	
+	Matrix result(rows_, cols_);
+
+	for (size_t r = 0; r < rows_; r++)
+		for (size_t c = 0; c < cols_; c++)
+			result[r][c] = elements_[r][c] - other.elements_[r][c];
+
+	return result;
+}
