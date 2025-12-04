@@ -20,6 +20,9 @@ public:
 	size_t getCols() const;
 
 	std::vector<double>& operator[](size_t i);
+	const std::vector<double>& operator[](size_t i) const;
+
 	Matrix operator+ (const Matrix& other) const;
 	Matrix operator- (const Matrix& other) const;
+	Matrix operator* (const Matrix& other) const;
 };

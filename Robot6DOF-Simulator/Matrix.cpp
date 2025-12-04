@@ -15,6 +15,8 @@ size_t Matrix::getCols() const { return cols_; }
 
 std::vector<double>& Matrix::operator[](size_t i) { return elements_[i]; }
 
+const std::vector<double>& Matrix::operator[](size_t i) const { return elements_[i]; }
+
 Matrix Matrix::operator+ (const Matrix& other) const {
 
 	if (rows_ != other.rows_ || cols_ != other.cols_)
@@ -39,6 +41,21 @@ Matrix Matrix::operator- (const Matrix& other) const {
 	for (size_t r = 0; r < rows_; r++)
 		for (size_t c = 0; c < cols_; c++)
 			result[r][c] = elements_[r][c] - other.elements_[r][c];
+
+	return result;
+}
+
+Matrix Matrix::operator* (const Matrix& other) const {
+
+	if (cols_ != other.rows_)
+		throw std::runtime_error("[Matrix] Cannot multiply matrices with different numbers of columns and rows.");
+
+	Matrix result(rows_, other.cols_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < other.cols_; j++)
+			for (size_t k = 0; k < cols_; k++)
+				result[i][j] += elements_[i][k] * other.elements_[k][j];
 
 	return result;
 }
