@@ -1,6 +1,10 @@
 #include "Matrix.hpp"
 
 Matrix::Matrix(size_t rows, size_t cols) : rows_(rows), cols_(cols) {
+
+	if (rows_ = 0 || cols_ == 0)
+		throw std::invalid_argument("[Matrix] rows and cols must be > 0.");
+
 	elements_.resize(rows_);
 
 	for (auto& elem : elements_)
@@ -56,6 +60,32 @@ Matrix Matrix::operator* (const Matrix& other) const {
 		for (size_t j = 0; j < other.cols_; j++)
 			for (size_t k = 0; k < cols_; k++)
 				result[i][j] += elements_[i][k] * other.elements_[k][j];
+
+	return result;
+}
+
+Matrix Matrix::transpose() const {
+
+	Matrix result(cols_, rows_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++)
+			result[j][i] = elements_[i][j];
+
+	return result;
+}
+
+Matrix Matrix::identity() const {
+	
+	if (rows_ != cols_)
+		throw std::runtime_error("[Matrix] Identity exists only for square matrix.");
+
+	Matrix result(rows_, cols_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++) {
+			result[i][j] = (i == j ? 1.0 : 0.0);
+		}
 
 	return result;
 }

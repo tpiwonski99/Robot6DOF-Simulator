@@ -6,8 +6,6 @@
 
 /* TO DO
 	
-	TRANSPOSE
-	IDENTITY 
 	DETERMINIANT
 	INVERSE
 	IS_SQUARE
@@ -45,4 +43,7 @@ public:
 	Matrix operator+ (const Matrix& other) const;
 	Matrix operator- (const Matrix& other) const;
 	Matrix operator* (const Matrix& other) const;
+
+	Matrix transpose() const;
+	Matrix identity() const;
 };

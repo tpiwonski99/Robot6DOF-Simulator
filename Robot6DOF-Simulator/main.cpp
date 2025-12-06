@@ -16,5 +16,8 @@ int main()
 
 	std::cout << length << "\n";
 
+
+	Matrix m1(0, 0);
+
 	return -1;
 }
