@@ -6,7 +6,6 @@
 
 /* TO DO
 	
-	DETERMINIANT
 	INVERSE
 	IS_SQUARE
 	IS_IDENTITY
@@ -46,4 +45,6 @@ public:
 
 	Matrix transpose() const;
 	Matrix identity() const;
+	Matrix submatrix(size_t removeRow, size_t removeCol) const;
+	double determinant() const;
 };

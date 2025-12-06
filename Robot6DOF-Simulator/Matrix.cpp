@@ -2,7 +2,7 @@
 
 Matrix::Matrix(size_t rows, size_t cols) : rows_(rows), cols_(cols) {
 
-	if (rows_ = 0 || cols_ == 0)
+	if (rows_ == 0 || cols_ == 0)
 		throw std::invalid_argument("[Matrix] rows and cols must be > 0.");
 
 	elements_.resize(rows_);
@@ -86,6 +86,55 @@ Matrix Matrix::identity() const {
 		for (size_t j = 0; j < cols_; j++) {
 			result[i][j] = (i == j ? 1.0 : 0.0);
 		}
+
+	return result;
+}
+
+Matrix Matrix::submatrix(size_t removeRow, size_t removeCol) const {
+
+	if (removeRow > rows_ || removeCol > cols_)
+		throw std::runtime_error("[Matrix] Invalid removeRow / removeCol value.");
+
+	Matrix result(rows_ - 1, cols_ - 1);
+
+	size_t r = 0;
+	for (size_t i = 0; i < rows_; i++) {
+		if (i == removeRow) continue;
+
+		size_t c = 0;
+		for (size_t j = 0; j < cols_; j++) {
+			if (j == removeCol) continue;
+
+			result[r][c] = elements_[i][j];
+			c++;
+		}
+		r++;
+	}
+
+	return result;
+}
+
+double Matrix::determinant() const {
+
+	if (rows_ != cols_)
+		throw std::runtime_error("[Matrix] Determinant exists only for square matrix.");
+
+	if (rows_ == 1) return elements_[0][0];
+
+	if (rows_ == 2)
+		return (elements_[0][0] * elements_[1][1] - elements_[0][1] * elements_[1][0]);
+
+	double result = 0;
+
+	for (size_t j = 0; j < cols_; j++) {
+		if (elements_[0][j] == 0) continue;
+
+		Matrix minor = submatrix(0, j);
+
+		double sign = (j % 2 == 0 ? 1 : -1);
+
+		result += sign * elements_[0][j] * minor.determinant();
+	}
 
 	return result;
 }
