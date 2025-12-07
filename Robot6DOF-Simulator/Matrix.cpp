@@ -19,7 +19,7 @@ void Matrix::print(int precision) const {
 
 	for (size_t i = 0; i < rows_; i++) {
 
-		std::cerr << "[ ";
+		std::cout << "[ ";
 
 		for (size_t j = 0; j < cols_; j++) {
 			std::cout << std::setw(8) << elements_[i][j] << " ";

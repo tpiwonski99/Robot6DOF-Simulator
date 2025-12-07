@@ -11,6 +11,22 @@ Matrix3::Matrix3(double m00, double m01, double m02,
 	elements_[2][0] = m20;  elements_[2][1] = m21;  elements_[2][2] = m22;
 }
 
+void Matrix3::print(int precision) const {
+
+	std::cout << std::fixed << std::setprecision(precision);
+
+	for (size_t i = 0; i < 3; i++) {
+
+		std::cout << "[ ";
+
+		for (size_t j = 0; j < 3; j++) {
+			std::cout << std::setw(8) << elements_[i][j] << " ";
+		}
+
+		std::cout << "]" << std::endl;
+	}
+}
+
 Matrix3 Matrix3::operator*(const Matrix3& other) const {
 	Matrix3 result;
 	
@@ -28,6 +44,17 @@ Vector3 Matrix3::operator*(const Vector3& v) const {
 		elements_[1][0] * v.getX() + elements_[1][1] * v.getY() + elements_[1][2] * v.getZ(),
 		elements_[2][0] * v.getX() + elements_[2][1] * v.getY() + elements_[2][2] * v.getZ()
 	);
+}
+
+bool Matrix3::operator==(const Matrix3& other) const {
+	const double EPS = 1e-9;
+
+	for (size_t i = 0; i < 3; i++)
+		for (size_t j = 0; j < 3; j++)
+			if (std::abs(elements_[i][j] - other.elements_[i][j]) > EPS)
+				return false;
+
+	return true;
 }
 
 Matrix3 Matrix3::transpose() const {
@@ -101,30 +128,33 @@ Matrix3 Matrix3::orthonormalize() const {
 		X.getZ(), Y.getZ(), Z.getZ());
 }
 
-Matrix3 Matrix3::fromEuler(double roll, double pitch, double yaw) {
-	Matrix3 Rx = rotateX(roll);
-	Matrix3 Ry = rotateY(pitch);
-	Matrix3 Rz = rotateZ(yaw);
+Matrix3 Matrix3::fromEuler(double roll, double pitch, double yaw)
+{
+	double cr = cos(roll), sr = sin(roll);
+	double cp = cos(pitch), sp = sin(pitch);
+	double cy = cos(yaw), sy = sin(yaw);
 
-	return Rx * Ry * Rz;
+	return Matrix3(
+		cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr,
+		sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr,
+		-sp, cp * sr, cp * cr);
 }
 
-std::tuple<double, double, double> Matrix3::toEuler() const {
+Vector3 Matrix3::toEuler() const {
+	double pitch = -asin(elements_[2][0]);
 
-	double yaw, roll;
+	double roll, yaw;
 
-	double cp = std::sqrt(elements_[0][0] * elements_[0][0] + elements_[1][0] * elements_[1][0]);
+	double cp = cos(pitch);
 
-	double pitch = std::atan2(-elements_[2][0], cp);
-
-	if (cp < 1e-6) {
-		yaw = std::atan2(-elements_[0][1], elements_[1][1]);
-		roll = 0.0;
+	if (fabs(cp) > 1e-6) {
+		roll = atan2(elements_[2][1] / cp, elements_[2][2] / cp);
+		yaw = atan2(elements_[1][0] / cp, elements_[0][0] / cp);
 	}
 	else {
-		yaw = std::atan2(elements_[1][0], elements_[0][0]);
-		roll = std::atan2(elements_[2][1], elements_[2][2]);
+		roll = 0.0;
+		yaw = atan2(-elements_[0][1], elements_[1][1]);
 	}
 
-	return { roll, pitch, yaw };
+	return Vector3(roll, pitch, yaw);
 }
