@@ -11,7 +11,6 @@ Matrix3::Matrix3(double m00, double m01, double m02,
 	elements_[2][0] = m20;  elements_[2][1] = m21;  elements_[2][2] = m22;
 }
 
-
 Matrix3 Matrix3::operator*(const Matrix3& other) const {
 	Matrix3 result;
 	
@@ -22,6 +21,7 @@ Matrix3 Matrix3::operator*(const Matrix3& other) const {
 	
 	return result;
 }
+
 Vector3 Matrix3::operator*(const Vector3& v) const {
 	return Vector3(
 		elements_[0][0] * v.getX() + elements_[0][1] * v.getY() + elements_[0][2] * v.getZ(),
@@ -113,9 +113,11 @@ std::tuple<double, double, double> Matrix3::toEuler() const {
 
 	double yaw, roll;
 
-	double pitch = std::asin(elements_[2][0]);
+	double cp = std::sqrt(elements_[0][0] * elements_[0][0] + elements_[1][0] * elements_[1][0]);
 
-	if (std::abs(std::cos(pitch)) < 1e-6) {
+	double pitch = std::atan2(-elements_[2][0], cp);
+
+	if (cp < 1e-6) {
 		yaw = std::atan2(-elements_[0][1], elements_[1][1]);
 		roll = 0.0;
 	}
