@@ -35,6 +35,7 @@ public:
 
 	size_t getRows() const;
 	size_t getCols() const;
+	bool is_square() const;
 
 	std::vector<double>& operator[](size_t i);
 	const std::vector<double>& operator[](size_t i) const;
@@ -47,4 +48,7 @@ public:
 	Matrix identity() const;
 	Matrix submatrix(size_t removeRow, size_t removeCol) const;
 	double determinant() const;
+
+	Matrix cofactorMatrix() const;
+	Matrix inverse() const;
 };
