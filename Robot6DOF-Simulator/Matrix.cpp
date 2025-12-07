@@ -17,6 +17,8 @@ size_t Matrix::getRows() const { return rows_; }
 
 size_t Matrix::getCols() const { return cols_; }
 
+bool Matrix::is_square() const { return rows_ == cols_; }
+
 std::vector<double>& Matrix::operator[](size_t i) { return elements_[i]; }
 
 const std::vector<double>& Matrix::operator[](size_t i) const { return elements_[i]; }
@@ -77,7 +79,7 @@ Matrix Matrix::transpose() const {
 
 Matrix Matrix::identity() const {
 	
-	if (rows_ != cols_)
+	if (!is_square())
 		throw std::runtime_error("[Matrix] Identity exists only for square matrix.");
 
 	Matrix result(rows_, cols_);
@@ -116,7 +118,7 @@ Matrix Matrix::submatrix(size_t removeRow, size_t removeCol) const {
 
 double Matrix::determinant() const {
 
-	if (rows_ != cols_)
+	if (!is_square())
 		throw std::runtime_error("[Matrix] Determinant exists only for square matrix.");
 
 	if (rows_ == 1) return elements_[0][0];
@@ -138,3 +140,44 @@ double Matrix::determinant() const {
 
 	return result;
 }
+
+Matrix Matrix::cofactorMatrix() const {
+
+	if (!is_square)
+		throw std::runtime_error("[Matrix] Cofactor matrix exists only for square matrix.");
+
+	Matrix result(rows_, cols_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++) {
+			Matrix minor = submatrix(i, j);
+			double det = minor.determinant();
+			double sign = ((i + j) % 2 == 0) ? 1.0 : -1.0;
+			
+			result[i][j] = sign * det;
+		}
+	
+	return result;
+}
+
+Matrix Matrix::inverse() const {
+	if (!is_square())
+		throw std::runtime_error("[Matrix] Inverse matrix exists only for square matrix.");
+
+	double det = determinant();
+
+	if (std::abs(det) < 1e-12)
+		throw std::runtime_error("[Matrix] Matrix is singular – determinant = 0.");
+
+	Matrix cofactor = cofactorMatrix();
+	Matrix adjoint = cofactor.transpose();
+
+	Matrix result(rows_, cols_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++)
+			result[i][j] = adjoint[i][j] / det;
+
+	return result;
+}
+
