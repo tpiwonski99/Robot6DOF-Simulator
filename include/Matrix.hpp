@@ -5,19 +5,6 @@
 #include <stdexcept>
 #include <iomanip>
 
-/* TO DO
-	
-	NOWA KLASA MATRIX4: 
-
-	FUNKCJE OBROTU - ROT X/Y/Z 
-	TRANSLATION (X, Y, Z)
-
-	ZMIANA TCP - MATRIX4 *VECTOR3 
-
-	FOWARD KINEMATICS 
-	ITD.
-
-*/
 class Matrix {
 
 private: 
