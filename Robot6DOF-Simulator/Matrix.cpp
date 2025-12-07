@@ -13,6 +13,22 @@ Matrix::Matrix(size_t rows, size_t cols) : rows_(rows), cols_(cols) {
 	}
 }
 
+void Matrix::print(int precision) const {
+
+	std::cout << std::fixed << std::setprecision(precision);
+
+	for (size_t i = 0; i < rows_; i++) {
+
+		std::cerr << "[ ";
+
+		for (size_t j = 0; j < cols_; j++) {
+			std::cout << std::setw(8) << elements_[i][j] << " ";
+		}
+
+		std::cout << "]" << std::endl;
+	}
+}
+
 size_t Matrix::getRows() const { return rows_; }
 
 size_t Matrix::getCols() const { return cols_; }
@@ -66,6 +82,31 @@ Matrix Matrix::operator* (const Matrix& other) const {
 	return result;
 }
 
+Matrix Matrix::operator* (double s) const {
+
+	Matrix result(rows_, cols_);
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++)
+			result[i][j] = elements_[i][j] * s;
+
+	return result;
+}
+
+bool Matrix::operator== (const Matrix& other) const {
+	if (rows_ != other.rows_ || cols_ != other.cols_)
+		return false;
+
+	const double EPS = 1e-9;
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++)
+			if (std::abs(elements_[i][j] - other.elements_[i][j]) > EPS)
+				return false;
+
+	return true;
+}
+
 Matrix Matrix::transpose() const {
 
 	Matrix result(cols_, rows_);
@@ -116,6 +157,8 @@ Matrix Matrix::submatrix(size_t removeRow, size_t removeCol) const {
 	return result;
 }
 
+bool Matrix::operator!=(const Matrix& other) const { return !(*this == other); }
+
 double Matrix::determinant() const {
 
 	if (!is_square())
@@ -143,7 +186,7 @@ double Matrix::determinant() const {
 
 Matrix Matrix::cofactorMatrix() const {
 
-	if (!is_square)
+	if (!is_square())
 		throw std::runtime_error("[Matrix] Cofactor matrix exists only for square matrix.");
 
 	Matrix result(rows_, cols_);
@@ -172,12 +215,48 @@ Matrix Matrix::inverse() const {
 	Matrix cofactor = cofactorMatrix();
 	Matrix adjoint = cofactor.transpose();
 
-	Matrix result(rows_, cols_);
-
-	for (size_t i = 0; i < rows_; i++)
-		for (size_t j = 0; j < cols_; j++)
-			result[i][j] = adjoint[i][j] / det;
-
-	return result;
+	return adjoint * (1.0 / det);
 }
 
+bool Matrix::isIdentity(double eps) const {
+
+	if (!is_square()) {
+		std::cerr << "[Matrix] Given matrix isn't square.";
+		return false;
+	}
+
+	for (size_t i = 0; i < rows_; i++)
+		for (size_t j = 0; j < cols_; j++) {
+			double expected = (i == j) ? 1.0 : 0.0;
+			if (std::fabs(elements_[i][j] - expected) > eps)
+				return false;
+		}
+
+	return true;
+}
+
+double Matrix::trace() const {
+
+	if (!is_square())
+		throw std::runtime_error("[Matrix] trace() requires square matrix.");
+	
+	double sum = 0;
+
+	for (size_t i = 0; i < rows_; i++)
+		sum += elements_[i][i];
+
+	if (sum == 0)
+		std::cerr << "[Matrix] Trace is equal to zero. Matrix is traceless.";
+
+	return sum;
+}
+
+bool Matrix::isOrthogonal(double eps) const {
+	
+	if (!is_square())
+		return false;
+
+	Matrix test = this->transpose() * (*this);
+
+	return test.isIdentity(eps);
+}

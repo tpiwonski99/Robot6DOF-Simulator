@@ -1,7 +1,7 @@
 #include "Vector3.hpp"
 #include "Matrix.hpp"
 
-int main()
+	int main()
 {
 	Vector3 a(1, 2, 3);
 	Vector3 b(1, 2, 3);
@@ -16,8 +16,15 @@ int main()
 
 	std::cout << length << "\n";
 
+	Matrix A(3, 3);
+	A[0] = { 1,2,3 };
+	A[1] = { 0,1,4 };
+	A[2] = { 5,6,0 };
 
-	Matrix m1(0, 0);
+	Matrix inv = A.inverse();
+
+	Matrix I = A * inv;
+	I.print();
 
 	return -1;
 }
