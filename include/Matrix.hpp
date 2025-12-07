@@ -3,13 +3,10 @@
 #include <cmath>
 #include <vector>
 #include <stdexcept>
+#include <iomanip>
 
 /* TO DO
 	
-	INVERSE
-	IS_SQUARE
-	IS_IDENTITY
-
 	NOWA KLASA MATRIX4: 
 
 	FUNKCJE OBROTU - ROT X/Y/Z 
@@ -33,6 +30,8 @@ public:
 
 	Matrix(size_t rows, size_t cols);
 
+	void print(int precision = 3) const;
+
 	size_t getRows() const;
 	size_t getCols() const;
 	bool is_square() const;
@@ -43,6 +42,11 @@ public:
 	Matrix operator+ (const Matrix& other) const;
 	Matrix operator- (const Matrix& other) const;
 	Matrix operator* (const Matrix& other) const;
+	Matrix operator* (double s) const;
+	friend Matrix operator*(double s, const Matrix& m) { return m * s; }
+
+	bool operator== (const Matrix& other) const;
+	bool operator!=(const Matrix& other) const;
 
 	Matrix transpose() const;
 	Matrix identity() const;
@@ -51,4 +55,8 @@ public:
 
 	Matrix cofactorMatrix() const;
 	Matrix inverse() const;
+
+	bool isIdentity(double eps = 1e-9) const;
+	double trace() const;
+	bool isOrthogonal(double eps = 1e-9) const;
 };
