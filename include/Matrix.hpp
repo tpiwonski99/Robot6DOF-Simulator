@@ -36,6 +36,7 @@ public:
 	size_t getCols() const;
 	bool is_square() const;
 
+	const double& operator()(size_t i, size_t j) const { return elements_[i][j]; }
 	std::vector<double>& operator[](size_t i);
 	const std::vector<double>& operator[](size_t i) const;
 
