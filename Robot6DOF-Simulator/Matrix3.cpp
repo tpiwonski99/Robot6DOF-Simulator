@@ -31,9 +31,11 @@ Matrix3 Matrix3::operator*(const Matrix3& other) const {
 	Matrix3 result;
 	
 	for (size_t i = 0; i < 3; i++)
-		for (size_t j = 0; j < 3; j++)
+		for (size_t j = 0; j < 3; j++) {
+			result[i][j] = 0.0;
 			for (size_t k = 0; k < 3; k++)
 				result[i][j] += elements_[i][k] * other.elements_[k][j];
+		}
 	
 	return result;
 }
@@ -90,11 +92,20 @@ Matrix3 Matrix3::rotateZ(double angle) {
 
 bool Matrix3::isOrthogonal(double eps) const {
 	Matrix3 Rt = this->transpose();
-	Matrix3 shouldBeIdentity = (*this) * Rt;
+	Matrix3 I = (*this) * Rt;
+
+	for (size_t i = 0; i < 3; ++i)
+		for (size_t j = 0; j < 3; ++j) {
+			double expected = (i == j) ? 1.0 : 0.0;
+			if (std::fabs(I[i][j] - expected) > eps)
+				return false;
+		}
 
 	double det = this->determinant();
+	if (std::fabs(std::fabs(det) - 1.0) > eps)
+		return false;
 
-	return std::abs(det - 1.0) < eps;
+	return true;
 }
 
 double Matrix3::determinant() const {
@@ -113,12 +124,19 @@ Matrix3 Matrix3::orthonormalize() const {
 	Vector3 X(elements_[0][0], elements_[1][0], elements_[2][0]);
 	Vector3 Y(elements_[0][1], elements_[1][1], elements_[2][1]);
 	Vector3 Z(elements_[0][2], elements_[1][2], elements_[2][2]);
+	
+	double lenX = X.length();
+	if (lenX < 1e-12) throw std::runtime_error("Cannot orthonormalize: X is zero.");
 
-	X = X * (1.0 / X.length());
+	X = X * (1.0 / lenX);
 
 	double projXY = X.dotProduct(Y);
 	Y = Y - (X * projXY);
-	Y = Y * (1.0 / Y.length());
+
+	double lenY = Y.length();
+	if (lenY < 1e-12) throw std::runtime_error("Cannot orthonormalize: Y is collinear with X.");
+
+	Y = Y * (1.0 / lenY);
 
 	Z = X.cross(Y);
 
@@ -141,7 +159,12 @@ Matrix3 Matrix3::fromEuler(double roll, double pitch, double yaw)
 }
 
 Vector3 Matrix3::toEuler() const {
-	double pitch = -asin(elements_[2][0]);
+	double v = elements_[2][0];
+	
+	if (v > 1.0) v = 1.0;
+	if (v < -1.0) v = -1.0;
+	
+	double pitch = -asin(v);
 
 	double roll, yaw;
 
@@ -157,4 +180,134 @@ Vector3 Matrix3::toEuler() const {
 	}
 
 	return Vector3(roll, pitch, yaw);
+}
+
+Matrix3 Matrix3::fromAxisAngle(const Vector3& axis, double angle) {
+
+	double ax = axis.getX();
+	double ay = axis.getY();
+	double az = axis.getZ();
+
+	double len = std::sqrt(ax * ax + ay * ay + az * az);
+
+	if (len < 1e-8)
+		throw std::runtime_error("[Matrix3] Given vector length is equal to zero.");
+
+	double nx = ax / len;
+	double ny = ay / len;
+	double nz = az / len;
+	
+	double c = std::cos(angle);
+	double s = std::sin(angle);
+	double t = 1.0 - c;
+
+	double m00 = t * nx * nx + c;
+	double m11 = t * ny * ny + c;
+	double m22 = t * nz * nz + c;
+
+	double m01 = t * nx * ny - s * nz;
+	double m10 = t * nx * ny + s * nz;
+
+	double m02 = t * nx * nz + s * ny;
+	double m20 = t * nx * nz - s * ny;
+
+	double m12 = t * ny * nz - s * nx;
+	double m21 = t * ny * nz + s * nx;
+
+	return Matrix3 (
+		m00, m01, m02, 
+		m10, m11, m12,
+		m20, m21, m22);
+}
+
+void Matrix3::toAxisAngle(Vector3& axis, double& angle) const {
+	const double eps = 1e-6;
+	const double eps2 = 1e-12;
+
+    double trace = this->trace();
+	double cos_theta = (trace - 1) * 0.5;
+
+	if (cos_theta > 1.0) cos_theta = 1.0;
+	if (cos_theta < -1.0) cos_theta = -1.0;
+
+	angle = std::acos(cos_theta);
+
+	if (std::fabs(angle) < eps) {
+		axis = Vector3(1.0, 0.0, 0.0);
+		angle = 0.0;
+		return;
+	}
+
+	if (M_PI - angle < eps) {
+		
+		double xx = (elements_[0][0] + 1.0) * 0.5;
+		double yy = (elements_[1][1] + 1.0) * 0.5;
+		double zz = (elements_[2][2] + 1.0) * 0.5;
+
+		double xy = (elements_[0][1] + elements_[1][0]) * 0.25;
+		double xz = (elements_[0][2] + elements_[2][0]) * 0.25;
+		double yz = (elements_[1][2] + elements_[2][1]) * 0.25;
+
+		double x, y, z;
+		if (xx > yy && xx > zz) {
+			x = std::sqrt(std::max(xx, 0.0));
+			if (x < eps2) {
+				y = 0.0;
+				z = 0.0;
+			}
+			else {
+				y = xy / x;
+				z = xz / x;
+			}
+		}
+
+		else if (yy > zz) {
+			y = std::sqrt(std::max(yy, 0.0));
+			if (y < eps2) {
+				x = 0.0;
+				z = 0.0;
+			}
+			else {
+				x = xy / y;
+				z = yz / y;
+			}
+		}
+		else {
+			z = std::sqrt(std::max(zz, 0.0));
+			if (z < eps2) {
+				x = 0.0;
+				y = 0.0;
+			}
+			else {
+				x = xz / z;
+				y = yz / z;
+			}
+		}
+
+		axis = Vector3(x, y, z);
+		double len = axis.length();
+		if (len > eps2) {
+			axis = axis * (1.0 / len);
+		}
+		else {
+			axis = Vector3(1.0, 0.0, 0.0); 
+		}
+		return;
+	}
+
+	double s = std::sin(angle);
+	double denom = 2.0 * s;
+
+	double nx = (elements_[2][1] - elements_[1][2]) / denom;
+	double ny = (elements_[0][2] - elements_[2][0]) / denom;
+	double nz = (elements_[1][0] - elements_[0][1]) / denom;
+
+	axis = Vector3(nx, ny, nz);
+	double len = axis.length();
+	if (len > eps2) {
+		axis = axis * (1.0 / len);
+	}
+	else {
+		axis = Vector3(1.0, 0.0, 0.0);
+	}
 }

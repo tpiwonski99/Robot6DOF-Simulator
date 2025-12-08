@@ -93,6 +93,20 @@ Matrix Matrix::operator* (double s) const {
 	return result;
 }
 
+Vector3 Matrix::operator*(const Vector3& v) const {
+
+	if (rows_ != 3 && cols_ != 3)
+		throw std::runtime_error("[Matrix] Multiplication by a vector is only possible in a 3x3 matrix.");
+
+	return Vector3(
+		elements_[0][0] * v.getX() + elements_[0][1] * v.getY() + elements_[0][2] * v.getZ(),
+		elements_[1][0] * v.getX() + elements_[1][1] * v.getY() + elements_[1][2] * v.getZ(),
+		elements_[2][0] * v.getX() + elements_[2][1] * v.getY() + elements_[2][2] * v.getZ()
+	);
+}
+
+bool Matrix::operator!=(const Matrix& other) const { return !(*this == other); }
+
 bool Matrix::operator== (const Matrix& other) const {
 	if (rows_ != other.rows_ || cols_ != other.cols_)
 		return false;
@@ -133,9 +147,20 @@ Matrix Matrix::identity() const {
 	return result;
 }
 
+Matrix Matrix::identity(size_t n) {
+	if (n == 0)
+		throw std::invalid_argument("[Matrix] Invalid n argument.");
+
+	Matrix result(n, n);
+	for (size_t i = 0; i < n; i++)
+		result[i][i] = 1.0;
+
+	return result;
+}
+
 Matrix Matrix::submatrix(size_t removeRow, size_t removeCol) const {
 
-	if (removeRow > rows_ || removeCol > cols_)
+	if (removeRow >= rows_ || removeCol >= cols_)
 		throw std::runtime_error("[Matrix] Invalid removeRow / removeCol value.");
 
 	Matrix result(rows_ - 1, cols_ - 1);
@@ -156,8 +181,6 @@ Matrix Matrix::submatrix(size_t removeRow, size_t removeCol) const {
 
 	return result;
 }
-
-bool Matrix::operator!=(const Matrix& other) const { return !(*this == other); }
 
 double Matrix::determinant() const {
 
@@ -208,7 +231,6 @@ Matrix Matrix::inverse() const {
 		throw std::runtime_error("[Matrix] Inverse matrix exists only for square matrix.");
 
 	double det = determinant();
-
 	if (std::abs(det) < 1e-12)
 		throw std::runtime_error("[Matrix] Matrix is singular – determinant = 0.");
 
@@ -239,7 +261,7 @@ double Matrix::trace() const {
 
 	if (!is_square())
 		throw std::runtime_error("[Matrix] trace() requires square matrix.");
-	
+
 	double sum = 0;
 
 	for (size_t i = 0; i < rows_; i++)
@@ -252,7 +274,7 @@ double Matrix::trace() const {
 }
 
 bool Matrix::isOrthogonal(double eps) const {
-	
+
 	if (!is_square())
 		return false;
 
