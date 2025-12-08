@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <stdexcept>
 #include <cmath>
 
 class Vector3 {
@@ -25,7 +26,14 @@ public:
 	Vector3 operator- (const Vector3& other) const;
 	Vector3 operator* (double scalar) const;
 
+	Vector3& operator+=(const Vector3& other);
+	Vector3& operator-=(const Vector3& other);
+	Vector3& operator*=(double scalar);
+
 	double length() const;
 	double dotProduct(const Vector3& other) const;
 	Vector3 cross(const Vector3& other) const;
+
+	Vector3 normalized() const;
+	void normalize();
 };

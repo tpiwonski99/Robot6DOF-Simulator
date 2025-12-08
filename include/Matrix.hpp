@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdexcept>
 #include <iomanip>
+#include "Vector3.hpp"
 
 class Matrix {
 
@@ -17,13 +18,12 @@ public:
 
 	Matrix(size_t rows, size_t cols);
 
-	void print(int precision = 3) const;
+	void print(int precision = 4) const;
 
 	size_t getRows() const;
 	size_t getCols() const;
 	bool is_square() const;
 
-	const double& operator()(size_t i, size_t j) const { return elements_[i][j]; }
 	std::vector<double>& operator[](size_t i);
 	const std::vector<double>& operator[](size_t i) const;
 
@@ -31,10 +31,10 @@ public:
 	Matrix operator- (const Matrix& other) const;
 	Matrix operator* (const Matrix& other) const;
 	Matrix operator* (double s) const;
-	friend Matrix operator*(double s, const Matrix& m) { return m * s; }
+	Vector3 operator*(const Vector3& v) const;
 
-	bool operator== (const Matrix& other) const;
 	bool operator!=(const Matrix& other) const;
+	bool operator== (const Matrix& other) const;
 
 	Matrix transpose() const;
 	Matrix identity() const;
@@ -44,7 +44,9 @@ public:
 	Matrix cofactorMatrix() const;
 	Matrix inverse() const;
 
-	bool isIdentity(double eps = 1e-9) const;
+	bool isIdentity(double eps) const;
+	static Matrix identity(size_t n);
+
 	double trace() const;
-	bool isOrthogonal(double eps = 1e-9) const;
+	bool isOrthogonal(double eps) const;
 };

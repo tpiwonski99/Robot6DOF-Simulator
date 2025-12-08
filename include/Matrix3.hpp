@@ -1,6 +1,8 @@
+#pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <iostream>  
 #include <array>
-#include <cmath>
 #include <tuple>
 #include <iomanip>
 #include "Vector3.hpp"
@@ -44,4 +46,6 @@ public:
     static Matrix3 fromEuler(double roll, double pitch, double yaw);
     Vector3 toEuler() const;
 
+    static Matrix3 fromAxisAngle(const Vector3& axis, double angle);
+    void toAxisAngle(Vector3& axis, double& angle) const;
 };
