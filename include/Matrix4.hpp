@@ -32,14 +32,10 @@ public:
     Matrix4 operator*(const Matrix4& other) const;
     bool operator==(const Matrix4& other) const;
 
-    /* TO DO
-    Vector3 transformPoint(const Vector3& p) const;   
-    Vector3 transformVector(const Vector3& v) const; 
-
-    Matrix4 inverseRigid() const;
+    Vector3 transformPoint(const Vector3& p) const;
+    Vector3 transformVector(const Vector3& v) const;
 
     Matrix3 rotation() const;
     Vector3 translation() const;
-
-    */
+    Matrix4 inverseRigid() const;
 };
