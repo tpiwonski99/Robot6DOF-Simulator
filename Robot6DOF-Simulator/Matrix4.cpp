@@ -50,3 +50,61 @@ bool Matrix4::operator==(const Matrix4& other) const {
 
 	return true;
 }
+
+Vector3 Matrix4::transformPoint(const Vector3& p) const {
+	double x = elements_[0][0] * p.getX() +
+		elements_[0][1] * p.getY() +
+		elements_[0][2] * p.getZ() +
+		elements_[0][3]; 
+
+	double y = elements_[1][0] * p.getX() +
+		elements_[1][1] * p.getY() +
+		elements_[1][2] * p.getZ() +
+		elements_[1][3];
+
+	double z = elements_[2][0] * p.getX() +
+		elements_[2][1] * p.getY() +
+		elements_[2][2] * p.getZ() +
+		elements_[2][3];
+
+	return Vector3(x, y, z);
+}
+
+Vector3 Matrix4::transformVector(const Vector3& v) const {
+	double x = elements_[0][0] * v.getX() +
+		elements_[0][1] * v.getY() +
+		elements_[0][2] * v.getZ();
+
+	double y = elements_[1][0] * v.getX() +
+		elements_[1][1] * v.getY() +
+		elements_[1][2] * v.getZ();
+
+	double z = elements_[2][0] * v.getX() +
+		elements_[2][1] * v.getY() +
+		elements_[2][2] * v.getZ();
+
+	return Vector3(x, y, z);
+}
+
+Matrix3 Matrix4::rotation() const {
+	return Matrix3(
+		elements_[0][0], elements_[0][1], elements_[0][2],
+		elements_[1][0], elements_[1][1], elements_[1][2],
+		elements_[2][0], elements_[2][1], elements_[2][2]
+	);
+}
+
+Vector3 Matrix4::translation() const {
+	return Vector3(elements_[0][3], elements_[1][3], elements_[2][3]);
+}
+
+Matrix4 Matrix4::inverseRigid() const {
+
+	Matrix3 R = rotation();
+	Vector3 T = translation();
+
+	Matrix3 R_T = R.transpose();
+	Vector3 T_inv = R_T * (T * -1.0);
+
+	return Matrix4(R_T, T_inv);
+}
