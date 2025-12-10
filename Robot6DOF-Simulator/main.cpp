@@ -1,7 +1,9 @@
 #include "Vector3.hpp"
 #include "Matrix.hpp"
+#include "Matrix3.hpp"
+#include "Matrix4.hpp"
 
-	int main()
+int main()
 {
 	Vector3 a(1, 2, 3);
 	Vector3 b(1, 2, 3);
@@ -28,3 +30,10 @@
 
 	return -1;
 }
+
+/* TO DO:
+
+Matrix4 forwardKinematics(const std::vector<double>& q) const;
+
+*/
+
