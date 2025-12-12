@@ -108,3 +108,7 @@ Matrix4 Matrix4::inverseRigid() const {
 
 	return Matrix4(R_T, T_inv);
 }
+
+Matrix4 Matrix4::forwardKinematics(const std::vector<double>& q) const {
+	
+}

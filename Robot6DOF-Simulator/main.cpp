@@ -34,6 +34,8 @@ int main()
 /* TO DO:
 
 Matrix4 forwardKinematics(const std::vector<double>& q) const;
+OPIS PRZEBUBÓW ROBOTA (NOTACJA DENAVITA-HARTENBERGA LUB LISTA PRZEBUGÓW TYP + 
+STA£E PRZESUNIÊCIA DO NASTÊPNEGO PRZEGUBU ITD.)
 
 */
 
