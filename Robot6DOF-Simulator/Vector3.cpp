@@ -94,3 +94,12 @@ void Vector3::normalize() {
     y_ /= len;
     z_ /= len;
 }
+
+bool Vector3::empty() const {
+
+    double eps = 1e-12;
+
+    if (x_ < eps && y_ < eps && z_ < eps) return false;
+
+    return true;
+}
