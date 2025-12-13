@@ -36,4 +36,6 @@ public:
 
 	Vector3 normalized() const;
 	void normalize();
+
+	bool empty() const;
 };
