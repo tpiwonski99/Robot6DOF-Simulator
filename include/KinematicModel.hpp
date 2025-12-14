@@ -77,10 +77,12 @@ public:
 	const Link& link(LinkId id) const;
 	const Joint& joint(JointId id) const;
 
-	/* TO DO:
-
 	std::size_t linkCount() const;
 	std::size_t jointCount() const;
+
+	std::size_t activeJointCount() const;
+
+	/* TO DO:
 
 	const std::vector<JointId>& childJoints(LinkId parent) const;
 
