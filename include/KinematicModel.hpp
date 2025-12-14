@@ -47,7 +47,7 @@ public:
 	};
 
 private:
-
+	
 	std::vector<Link> links_;
 	std::vector<Joint> joints_;
 
@@ -77,6 +77,8 @@ public:
 	const Link& link(LinkId id) const;
 	const Joint& joint(JointId id) const;
 
+	/* TO DO:
+
 	std::size_t linkCount() const;
 	std::size_t jointCount() const;
 
@@ -89,4 +91,6 @@ public:
 	std::vector<JointId> activeJoints() const;
 
 	void validate() const;
+
+	*/
 };
