@@ -110,3 +110,94 @@ KinematicModel::JointId KinematicModel::addJoint(const Joint& jointIn)
 
     return id;
 }
+
+void KinematicModel::setRoot(LinkId root) {
+
+    if (links_.empty())
+        throw std::logic_error("[KinematicModel] Cannot set root: no links in model.");
+
+    if (root >= links_.size())
+        throw std::out_of_range("[KinematicModel] Invalid root id (out of range).");
+
+    if (parentJointOfLink_.size() != links_.size())
+        throw std::logic_error("[KinematicModel] Internal error: parentJointOfLink_ not initialized for all links.");
+
+    if (parentJointOfLink_[root].has_value())
+        throw std::invalid_argument("[KinematicModel] Root can not have a parent joint.");
+
+    if (rootLink_.has_value() && rootLink_.value() == root) {
+        std::cerr << "[KinematicModel] root with this id has been already set.";
+        return;
+    }
+
+    if (rootLink_.has_value()) {
+        std::cerr << "[KinematicModel] Warning: changing root from '"
+            << links_[rootLink_.value()].name << "' to '" << links_[root].name << "'.\n";
+    }
+    else std::cerr << "[KinematicModel] Adding new root to the kinematic model.";
+
+    rootLink_ = root;
+}
+
+bool KinematicModel::hasRoot() const {
+
+    return rootLink_.has_value();
+}
+
+LinkId KinematicModel::root() const {
+
+    if (!rootLink_.has_value()) {
+        throw std::logic_error("[KinematicModel] Root hasn't been set yet.");
+    }
+
+    return rootLink_.value();
+}
+
+bool KinematicModel::hasLink(const std::string& name) const {
+    return (linkNameToId_.find(name) != linkNameToId_.end());
+}
+
+bool KinematicModel::hasJoint(const std::string& name) const {
+    return (jointNameToId_.find(name) != jointNameToId_.end());
+}
+
+LinkId KinematicModel::linkId(const std::string& name) const {
+
+    if (name.empty())
+        throw std::invalid_argument("[KinematicModel] Link name cannot be empty.");
+
+    if (!hasLink(name))
+        throw std::invalid_argument("[KinematicModel] Link with given name doesn't exist.");
+
+    auto it = linkNameToId_.find(name);
+
+    return it->second;
+}
+
+JointId KinematicModel::jointId(const std::string& name) const {
+
+    if (name.empty())
+        throw std::invalid_argument("[KinematicModel] Joint name cannot be empty.");
+
+    if (!hasJoint(name))
+        throw std::invalid_argument("[KinematicModel] Joint with given name doesn't exist.");
+
+    auto it = jointNameToId_.find(name);
+
+    return it->second;
+}
+
+const KinematicModel::Link& KinematicModel::link(LinkId id) const {
+    if (id >= links_.size())
+        throw std::out_of_range("[KinematicModel] Given link ID is invalid (out of range).");
+
+    return links_[id];
+}
+
+const KinematicModel::Joint& KinematicModel::joint(JointId id) const {
+    if (id >= joints_.size())
+        throw std::out_of_range("[KinematicModel] Given joint id is invalid (out of range).");
+
+    return joints_[id];
+}
+
