@@ -201,3 +201,23 @@ const KinematicModel::Joint& KinematicModel::joint(JointId id) const {
     return joints_[id];
 }
 
+std::size_t KinematicModel::linkCount() const {
+    return links_.size();
+}
+
+std::size_t KinematicModel::jointCount() const {
+    return joints_.size();
+}
+
+std::size_t KinematicModel::activeJointCount() const {
+
+    size_t res = 0;
+
+    if (joints_.empty()) return res;
+
+    for (const auto& joint : joints_) {
+        if (joint.type != JointType::Fixed) ++res;
+    }
+
+    return res;
+}
