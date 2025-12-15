@@ -221,3 +221,49 @@ std::size_t KinematicModel::activeJointCount() const {
 
     return res;
 }
+
+const std::vector<JointId>& KinematicModel::childJoints(LinkId parent) const {
+
+    if (childJointsByLink_.size() != links_.size())
+        throw std::logic_error("[KinematicModel] Internal error: not initialized for all links.");
+
+    if (parent >= links_.size())
+        throw std::out_of_range("[KinematicModel] Given parent ID is invalid.");
+
+    return childJointsByLink_[parent];
+}
+
+std::optional<KinematicModel::JointId> KinematicModel::parentJoint(LinkId child) const {
+    if (child >= links_.size()) {
+        throw std::out_of_range("[KinematicModel] Given child ID is invalid (out of range).");
+    }
+
+    if (parentJointOfLink_.size() != links_.size()) {
+        throw std::logic_error("[KinematicModel] Internal error: parentJointOfLink_ not initialized for all links.");
+    }
+
+    return parentJointOfLink_[child];
+}
+
+std::optional<KinematicModel::LinkId> KinematicModel::parentLink(LinkId child) const {
+    if (child >= links_.size()) {
+        throw std::out_of_range("[KinematicModel] Given child ID is invalid (out of range).");
+    }
+
+    if (parentJointOfLink_.size() != links_.size()) {
+        throw std::logic_error("[KinematicModel] Internal error: parentJointOfLink_ not initialized for all links.");
+    }
+
+    if (!parentJointOfLink_[child].has_value()) {
+        return std::nullopt;
+    }
+
+    const JointId pj = parentJointOfLink_[child].value();
+
+    if (pj >= joints_.size()) {
+        throw std::logic_error("[KinematicModel] Internal error: parent joint id is out of range.");
+    }
+
+    return joints_[pj].parentLink;
+}
+
