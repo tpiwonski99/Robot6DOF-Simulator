@@ -87,14 +87,9 @@ public:
 	std::optional<JointId> parentJoint(LinkId child) const;
 	std::optional<LinkId>  parentLink(LinkId child) const;
 
-	/* TO DO:
-
-	std::optional<LinkId>  parentLink(LinkId child) const;
-
 	std::vector<JointId> chain(LinkId from, LinkId to) const;
+
 	std::vector<JointId> activeJoints() const;
 
 	void validate() const;
-
-	*/
 };
