@@ -82,11 +82,13 @@ public:
 
 	std::size_t activeJointCount() const;
 
-	/* TO DO:
-
 	const std::vector<JointId>& childJoints(LinkId parent) const;
 
 	std::optional<JointId> parentJoint(LinkId child) const;
+	std::optional<LinkId>  parentLink(LinkId child) const;
+
+	/* TO DO:
+
 	std::optional<LinkId>  parentLink(LinkId child) const;
 
 	std::vector<JointId> chain(LinkId from, LinkId to) const;
