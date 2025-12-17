@@ -15,7 +15,7 @@ Matrix4::Matrix4(double m00, double m01, double m02, double m03,
 
 Matrix4::Matrix4(const Matrix3& R, const Vector3& t) {
 	elements_[0][0] = R[0][0],  elements_[0][1] = R[0][1];  elements_[0][2] = R[0][2], elements_[0][3] = t.getX();
-	elements_[1][0] = R[1][0],	elements_[0][1] = R[1][1];  elements_[1][2] = R[1][2], elements_[1][3] = t.getY();
+	elements_[1][0] = R[1][0],	elements_[1][1] = R[1][1];  elements_[1][2] = R[1][2], elements_[1][3] = t.getY();
 	elements_[2][0] = R[2][0],	elements_[2][1] = R[2][1];  elements_[2][2] = R[2][2], elements_[2][3] = t.getZ();
 	elements_[3][0] = 0.0;		elements_[3][1] = 0.0;		elements_[3][2] = 0.0,	   elements_[3][3] = 1.0;
 }
@@ -31,7 +31,7 @@ std::array<double, 4>& Matrix4::operator[](size_t i) { return elements_[i]; }
 const std::array<double, 4>& Matrix4::operator[](size_t i) const { return elements_[i]; }
 
 Matrix4 Matrix4::operator*(const Matrix4& other) const {  
-    Matrix4 result;  
+    Matrix4 result(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);  
 
     for (size_t i = 0; i < 4; i++)  
         for (size_t j = 0; j < 4; j++)  
@@ -107,8 +107,4 @@ Matrix4 Matrix4::inverseRigid() const {
 	Vector3 T_inv = R_T * (T * -1.0);
 
 	return Matrix4(R_T, T_inv);
-}
-
-Matrix4 Matrix4::forwardKinematics(const std::vector<double>& q) const {
-	
 }

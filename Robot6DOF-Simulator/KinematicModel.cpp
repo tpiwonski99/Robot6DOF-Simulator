@@ -1,5 +1,4 @@
 #include "KinematicModel.hpp"
-#include <stdexcept>
 
 using LinkId = std::size_t;
 using JointId = std::size_t;
