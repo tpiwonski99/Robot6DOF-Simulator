@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <optional>
+#include <stdexcept>
 
 #include "Vector3.hpp"
 #include "Matrix4.hpp"
@@ -92,4 +93,8 @@ public:
 	std::vector<JointId> activeJoints() const;
 
 	void validate() const;
+
+	// qActive[i] = activeJoints()[i]
+	std::vector<Matrix4> forwardKinematicsAll(const std::vector<double>& qActive) const;
+	Matrix4 poseWorld(LinkId link, const std::vector<double>& qActive) const;
 };

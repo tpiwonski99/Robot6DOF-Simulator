@@ -38,7 +38,4 @@ public:
     Matrix3 rotation() const;
     Vector3 translation() const;
     Matrix4 inverseRigid() const;
-
-    Matrix4 forwardKinematics(const std::vector<double>& q) const;
-
 };
