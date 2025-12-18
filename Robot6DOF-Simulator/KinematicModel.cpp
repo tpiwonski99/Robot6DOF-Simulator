@@ -438,3 +438,89 @@ void KinematicModel::validate() const {
     }
 }
 
+std::vector<Matrix4> KinematicModel::forwardKinematicsAll(const std::vector<double>& qActive) const {
+
+    const std::vector<JointId> active_joints = activeJoints();
+
+    if (qActive.size() != active_joints.size())
+        throw std::invalid_argument("[KinematicModel] qActive size is not equal to active joints of the robot");
+
+    std::vector<int> qIndexOfJoint(joints_.size(), -1);
+
+    for (size_t k = 0; k < active_joints.size(); ++k)
+    {
+        const JointId jid = active_joints[k];
+
+        if (static_cast<size_t>(jid) >= joints_.size())
+            throw std::runtime_error("[KinematicModel] activeJoints() returned invalid JointId.");
+
+        qIndexOfJoint[jid] = static_cast<int>(k);
+    }
+
+    LinkId rootId = root();
+    LinkId current = rootId;
+
+    while (true)
+    {
+        const auto& children = childJoints(current); 
+
+        if (children.empty())
+            break;
+
+        if (children.size() != 1)
+            throw std::runtime_error("[KinematicModel] Not a serial chain: link has multiple child joints.");
+
+        const JointId jid = children[0];
+        current = joint(jid).childLink;
+    }
+
+    const LinkId to = current;
+
+    std::vector<JointId> path = chain(rootId, to);
+
+    std::vector<Matrix4> transformations;
+    transformations.reserve(path.size() + 1);
+
+    Matrix4 T = Matrix4::identity();
+    transformations.push_back(T);
+
+    for (const JointId jid : path)
+    {
+        const Joint& J = joint(jid);
+
+        double q = 0.0;
+        const int qi = qIndexOfJoint[jid];
+        if (qi >= 0)
+            q = qActive[static_cast<size_t>(qi)];
+
+        Matrix4 A;
+
+        if (J.type == JointType::Fixed) {
+            A = J.origin;
+        }
+
+        else if (J.type == JointType::Revolute) {
+            const Matrix3 R = Matrix3::fromAxisAngle(J.axis, q);
+            const Vector3 t(0, 0, 0);
+            const Matrix4 motion(R, t);
+            A = J.origin * motion;
+        }
+
+        else if (J.type == JointType::Prismatic) {
+            const Matrix3 I;                
+            const Vector3 t = J.axis * q;
+            const Matrix4 motion(I, t);
+            A = J.origin * motion;
+        }
+        
+        else {
+            throw std::logic_error("[KinematicModel] Unknown JointType.");
+        }
+
+        T = T * A;
+        transformations.push_back(T);
+    }
+
+    return transformations;
+
+}
