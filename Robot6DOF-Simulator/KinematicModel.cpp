@@ -522,5 +522,71 @@ std::vector<Matrix4> KinematicModel::forwardKinematicsAll(const std::vector<doub
     }
 
     return transformations;
-
 }
+
+Matrix4 KinematicModel::poseWorld(LinkId link, const std::vector<double>& qActive) const
+{
+    if (link >= links_.size())
+        throw std::out_of_range("[KinematicModel] poseWorld(): link id out of range.");
+
+    const LinkId rootId = root();
+
+    if (link == rootId)
+        return Matrix4::identity();
+
+    const std::vector<JointId> active_joints = activeJoints();
+    if (qActive.size() != active_joints.size())
+        throw std::invalid_argument("[KinematicModel] poseWorld(): qActive size does not match number of active joints.");
+
+    std::vector<int> qIndexOfJoint(joints_.size(), -1);
+    for (size_t k = 0; k < active_joints.size(); ++k)
+    {
+        const JointId jid = active_joints[k];
+        if (jid >= joints_.size())
+            throw std::runtime_error("[KinematicModel] poseWorld(): activeJoints() returned invalid JointId.");
+        qIndexOfJoint[jid] = static_cast<int>(k);
+    }
+
+    const std::vector<JointId> path = chain(rootId, link);
+
+    Matrix4 T = Matrix4::identity();
+
+    for (const JointId jid : path)
+    {
+        const Joint& J = joint(jid);
+
+        double q = 0.0;
+        const int qi = qIndexOfJoint[jid];
+        if (qi >= 0)
+            q = qActive[static_cast<size_t>(qi)];
+
+        Matrix4 A;
+
+        if (J.type == JointType::Fixed) {
+            A = J.origin;
+        }
+
+        else if (J.type == JointType::Revolute) {
+            const Matrix3 R = Matrix3::fromAxisAngle(J.axis, q);
+            const Vector3 t(0.0, 0.0, 0.0);
+            const Matrix4 motion(R, t);
+            A = J.origin * motion;
+        }
+
+        else if (J.type == JointType::Prismatic) {
+            const Matrix3 I;                 
+            const Vector3 t = J.axis * q;     
+            const Matrix4 motion(I, t);
+            A = J.origin * motion;
+        }
+
+        else {
+            throw std::logic_error("[KinematicModel] poseWorld(): unknown JointType.");
+        }
+
+        T = T * A;
+    }
+
+    return T;
+}
+

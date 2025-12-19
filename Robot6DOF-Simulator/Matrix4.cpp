@@ -40,6 +40,15 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const {
 
     return result;  
 }
+Matrix4 Matrix4::operator+(const Matrix4& other) const {
+	Matrix4 result(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	for (size_t i = 0; i < 4; i++)
+		for (size_t j = 0; j < 4; j++)
+			result[i][j] = elements_[i][j] + other.elements_[i][j];
+
+	return result;
+}
 bool Matrix4::operator==(const Matrix4& other) const {
 	const double EPS = 1e-9;
 
