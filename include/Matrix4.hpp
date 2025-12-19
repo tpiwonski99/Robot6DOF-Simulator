@@ -30,6 +30,7 @@ public:
     const std::array<double, 4>& operator[](size_t i) const;
 
     Matrix4 operator*(const Matrix4& other) const;
+    Matrix4 operator+(const Matrix4& other) const;
     bool operator==(const Matrix4& other) const;
 
     Vector3 transformPoint(const Vector3& p) const;
