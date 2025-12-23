@@ -12,6 +12,7 @@ private:
 public:
 
 	Vector3(double x, double y, double z);
+	Vector3();
 	~Vector3() = default;
 
 	double getX() const;

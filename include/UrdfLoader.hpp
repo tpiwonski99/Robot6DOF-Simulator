@@ -6,6 +6,9 @@
 
 #include "KinematicModel.hpp"
 #include "tinyxml2.h"
+#include <sstream>
+#include <stdexcept>
+#include <cmath>
 
 namespace tinyxml2 {
 	class XMLDocument;
@@ -60,6 +63,7 @@ private:
 	void fillStats(const KinematicModel& model, Report* rep) const;
 
 	static const tinyxml2::XMLElement* optionalChild(const tinyxml2::XMLElement* parent, const char* name);
+	
 	static const tinyxml2::XMLElement* requiredChild(
 		const tinyxml2::XMLElement* parent,
 		const char* name,
@@ -73,7 +77,7 @@ private:
 		const char* attrName,
 		bool strict,
 		Report* rep,
-		const std::string& ctx
+		const std::string& ctx = ""
 	);
 
 	static void warn(Report* rep, const std::string& msg);
@@ -88,14 +92,14 @@ private:
 		const Vector3& def,
 		bool strict,
 		Report* rep,
-		const std::string& ctx
+		const std::string& ctx = ""
 	);
 
 	static Matrix4 parseOrigin(
 		const tinyxml2::XMLElement* jointEl,
 		bool strict,
 		Report* rep,
-		const std::string& ctx
+		const std::string& ctx = ""
 	);
 
 	static Vector3 parseAxis(
@@ -103,7 +107,7 @@ private:
 		bool normalizeAxis,
 		bool strict,
 		Report* rep,
-		const std::string& ctx
+		const std::string& ctx = ""
 	);
 
 	static void parseLimit(
@@ -112,6 +116,6 @@ private:
 		KinematicModel::JointLimit& outLimit,
 		bool strict,
 		Report* rep,
-		const std::string& ctx
+		const std::string& ctx = ""
 	);
 };
