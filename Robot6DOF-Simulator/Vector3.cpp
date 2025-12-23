@@ -2,6 +2,8 @@
 
 Vector3::Vector3(double x, double y, double z) : x_(x), y_(y), z_(z) {}
 
+Vector3::Vector3() { x_ = 0, y_ = 0, z_ = 0; }
+
 double Vector3::getX() const { return x_; }
 double Vector3::getY() const { return y_; }
 double Vector3::getZ() const { return z_; }
