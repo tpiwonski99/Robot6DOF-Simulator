@@ -313,3 +313,64 @@ void UrdfLoader::parseLimit(const tinyxml2::XMLElement* jointEl, KinematicModel:
     outLimit.lower = lower;
     outLimit.upper = upper;
 }
+
+const tinyxml2::XMLElement* UrdfLoader::findRobotElement(const tinyxml2::XMLDocument& doc) {
+
+    const tinyxml2::XMLElement* robotEl = doc.FirstChildElement("robot");
+    
+    if (!robotEl)
+        throw std::runtime_error("[UrdfLoader] Missing <robot> root element.");
+
+    return robotEl;
+}
+
+std::string UrdfLoader::readRobotName(const tinyxml2::XMLElement* robotEl) {
+
+    if (!robotEl)
+        throw std::invalid_argument("");
+
+    const char* name = robotEl->Attribute("name");
+
+    if (!name || name[0] == '\0')
+        return "";
+    
+    return std::string(name);
+}
+
+void UrdfLoader::parseLinks(const tinyxml2::XMLElement* robotEl, KinematicModel& model, Report* rep) const {
+
+    if (!robotEl) {
+        const std::string msg = "[UrdfLoader] parseLinks: robot element is null.";
+        
+        if (opt_.strict)
+            throw std::runtime_error(msg)
+                ;
+        warn(rep, msg);
+        return;
+    }
+
+    for (const tinyxml2::XMLElement* linkEl = robotEl->FirstChildElement("link"); linkEl != nullptr; linkEl = linkEl->NextSiblingElement("link")) {
+        
+        const std::string ctx = "link";
+
+        const std::string name = requiredAttr(linkEl, "name", opt_.strict, rep, ctx);
+
+        if (name.empty())
+            continue;
+
+        try {
+            model.addLink(name);
+        }
+        catch (const std::exception& e) {
+            const std::string msg =
+                "[UrdfLoader] parseLinks: cannot add link '" + name + "': " + e.what();
+
+            if (opt_.strict) {
+                throw;
+            }
+
+            warn(rep, msg);
+            continue;
+        }
+    }
+}
