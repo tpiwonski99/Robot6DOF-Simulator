@@ -30,9 +30,9 @@ std::string UrdfLoader::requiredAttr(const tinyxml2::XMLElement* el, const char*
         const std::string msg = "[UrdfLoader] Missing/empty attribute '" +
             std::string(attrName) + "'. Context: " + ctx;
 
-        if (strict) {
+        if (strict)
             throw std::runtime_error(msg);
-        }
+     
 
         warn(rep, msg);
         return "";
@@ -670,9 +670,8 @@ KinematicModel UrdfLoader::loadFromFile(const std::string& urdfPath, Report* out
 
     if (rc != tinyxml2::XML_SUCCESS) {
         const std::string err = doc.ErrorStr() ? std::string(doc.ErrorStr()) : std::string("unknown XML error");
-        throw std::runtime_error(
-            "[UrdfLoader] Cannot load URDF file '" + urdfPath + "': " + err
-        );
+        
+        throw std::runtime_error("[UrdfLoader] Cannot load URDF file '" + urdfPath + "': " + err);
     }
 
     const tinyxml2::XMLElement* robotEl = findRobotElement(doc);
@@ -699,11 +698,11 @@ KinematicModel UrdfLoader::loadFromString(const std::string& urdfXml, Report* ou
 
     tinyxml2::XMLDocument doc;
     const tinyxml2::XMLError rc = doc.Parse(urdfXml.c_str(), urdfXml.size());
+    
     if (rc != tinyxml2::XML_SUCCESS) {
         const std::string err = doc.ErrorStr() ? std::string(doc.ErrorStr()) : std::string("unknown XML error");
-        throw std::runtime_error(
-            "[UrdfLoader] Cannot parse URDF XML string: " + err
-        );
+        
+        throw std::runtime_error("[UrdfLoader] Cannot parse URDF XML string: " + err);
     }
 
     const tinyxml2::XMLElement* robotEl = findRobotElement(doc);
