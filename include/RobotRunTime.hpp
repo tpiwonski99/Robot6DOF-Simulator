@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <algorithm>
-#include <utility>
+#include <utility>W
 
 #include "KinematicModel.hpp"
 #include "Matrix4.hpp"
@@ -28,6 +28,7 @@ public:
 	void setQd(const std::vector<double>& qd);
 
 	void setJointPosition(const std::string& jointName, double value);
+	void setJointPosition(JointId id, double value);
 
 	void stepKinematic(double dt, const std::vector<double>& qd_cmd);
 
