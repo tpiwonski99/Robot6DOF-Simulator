@@ -590,3 +590,72 @@ Matrix4 KinematicModel::poseWorld(LinkId link, const std::vector<double>& qActiv
     return T;
 }
 
+KinematicModel::WorldKinematics KinematicModel::worldKinematics(const std::vector<double>& qActive) const {
+    
+    const auto active = activeJoints();
+    
+    if (qActive.size() != active.size())
+        throw std::invalid_argument("[KinematicModel] worldKinematics(): qActive size mismatch.");
+
+    std::vector<int> qIndexOfJoint(joints_.size(), -1);
+    for (std::size_t k = 0; k < active.size(); ++k) {
+        const JointId jid = active[k];
+        if (jid >= joints_.size())
+            throw std::runtime_error("[KinematicModel] worldKinematics(): invalid JointId from activeJoints().");
+        qIndexOfJoint[jid] = static_cast<int>(k);
+    }
+
+    WorldKinematics out;
+    out.T_world_link.assign(linkCount(), Matrix4::identity());
+    out.T_world_joint.assign(jointCount(), Matrix4::identity());
+
+    const LinkId rootId = root();
+    out.T_world_link[rootId] = Matrix4::identity();
+
+    std::vector<LinkId> stack;
+    stack.push_back(rootId);
+
+    while (!stack.empty()) {
+        const LinkId parent = stack.back();
+        stack.pop_back();
+
+        const Matrix4 T_wp = out.T_world_link[parent];
+
+        for (const JointId jid : childJoints(parent)) {
+            const Joint& J = joint(jid);
+
+            const Matrix4 T_wj = T_wp * J.origin;
+            out.T_world_joint[jid] = T_wj;
+
+            double q = 0.0;
+            const int qi = qIndexOfJoint[jid];
+            if (qi >= 0) q = qActive[static_cast<std::size_t>(qi)];
+
+            Matrix4 motion = Matrix4::identity();
+
+            if (J.type == JointType::Fixed) {
+                motion = Matrix4::identity();
+            }
+            else if (J.type == JointType::Revolute) {
+                const Matrix3 R = Matrix3::fromAxisAngle(J.axis, q);
+                motion = Matrix4(R, Vector3(0.0, 0.0, 0.0));
+            }
+            else if (J.type == JointType::Prismatic) {
+                const Matrix3 I;
+                const Vector3 t = J.axis * q;
+                motion = Matrix4(I, t);
+            }
+            else {
+                throw std::logic_error("[KinematicModel] worldKinematics(): unknown JointType.");
+            }
+
+            const LinkId child = J.childLink;
+            out.T_world_link[child] = T_wj * motion;
+
+            stack.push_back(child);
+        }
+    }
+
+    return out;
+}
+
