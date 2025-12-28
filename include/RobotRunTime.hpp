@@ -5,10 +5,11 @@
 #include <cstddef>
 #include <string>
 #include <algorithm>
-#include <utility>W
+#include <utility>
 
 #include "KinematicModel.hpp"
 #include "Matrix4.hpp"
+#include "Matrix.hpp"
 
 class RobotRunTime {
 
