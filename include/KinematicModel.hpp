@@ -104,4 +104,6 @@ public:
 	Matrix4 poseWorld(LinkId link, const std::vector<double>& qActive) const;
 
 	WorldKinematics worldKinematics(const std::vector<double>& qActive) const;
+
+	Matrix jacobian(LinkId endEff, const std::vector<double>& qActive) const;
 };
