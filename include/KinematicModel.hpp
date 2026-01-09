@@ -8,6 +8,7 @@
 #include "Vector3.hpp"
 #include "Matrix4.hpp"
 #include "Matrix.hpp"
+#include "Vector3.hpp"
 
 class KinematicModel {
 
