@@ -659,3 +659,84 @@ KinematicModel::WorldKinematics KinematicModel::worldKinematics(const std::vecto
     return out;
 }
 
+Matrix KinematicModel::jacobian(LinkId endEff, const std::vector<double>& qActive) const
+{
+    if (endEff >= linkCount()) {
+        throw std::out_of_range("[KinematicModel] jacobian(): endEff out of range.");
+    }
+
+    const std::vector<JointId> active_joints = activeJoints();
+    if (qActive.size() != active_joints.size()) {
+        throw std::invalid_argument("[KinematicModel] jacobian(): qActive size mismatch with active joints.");
+    }
+
+    std::vector<int> colOfJoint(jointCount(), -1);
+    for (std::size_t c = 0; c < active_joints.size(); ++c) {
+        const JointId jid = active_joints[c];
+        if (jid >= jointCount()) {
+            throw std::logic_error("[KinematicModel] jacobian(): activeJoints() returned invalid JointId.");
+        }
+        colOfJoint[jid] = static_cast<int>(c);
+    }
+
+    const KinematicModel::WorldKinematics kin = worldKinematics(qActive);
+
+    if (kin.T_world_link.size() != linkCount()) {
+        throw std::logic_error("[KinematicModel] jacobian(): worldKinematics returned wrong T_world_link size.");
+    }
+    if (kin.T_world_joint.size() != jointCount()) {
+        throw std::logic_error("[KinematicModel] jacobian(): worldKinematics returned wrong T_world_joint size.");
+    }
+
+    const Vector3 p_ee = kin.T_world_link[endEff].translation();
+
+    Matrix J(6, active_joints.size()); 
+
+    const std::vector<JointId> j_chain = chain(root(), endEff);
+
+    for (const JointId jid : j_chain) {
+
+        if (jid >= jointCount()) {
+            throw std::logic_error("[KinematicModel] jacobian(): chain() returned invalid JointId.");
+        }
+
+        const int col = colOfJoint[jid];
+        if (col < 0) {
+            continue; 
+        }
+
+        const Joint& Jnt = joint(jid);
+
+        const Matrix4& T_wj = kin.T_world_joint[jid];
+        const Vector3 p_j = T_wj.translation();
+
+        const Vector3 z = T_wj.rotation() * Jnt.axis;
+
+        Vector3 Jv(0.0, 0.0, 0.0);
+        Vector3 Jw(0.0, 0.0, 0.0);
+
+        if (Jnt.type == JointType::Revolute) {
+            const Vector3 r = p_ee - p_j;
+            Jv = z.cross(r);
+            Jw = z;
+        }
+        else if (Jnt.type == JointType::Prismatic) {
+            Jv = z;
+        }
+        else { 
+            continue;
+        }
+
+        const std::size_t c = static_cast<std::size_t>(col);
+
+        J[0][c] = Jv.getX();
+        J[1][c] = Jv.getY();
+        J[2][c] = Jv.getZ();
+
+        J[3][c] = Jw.getX();
+        J[4][c] = Jw.getY();
+        J[5][c] = Jw.getZ();
+    }
+
+    return J;
+}
