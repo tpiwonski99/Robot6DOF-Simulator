@@ -181,7 +181,7 @@ Matrix4 UrdfLoader::parseOrigin(const tinyxml2::XMLElement* jointEl, bool strict
 
     const char* rpyText = originEl->Attribute("rpy");
 
-    if (rpyText == nullptr)
+    if (rpyText != nullptr)
         rpy = parseVec3Text(rpyText, defZero, strict, rep, ctx + " / origin/rpy");
 
     const Matrix3 R = Matrix3::fromEuler(rpy.getX(), rpy.getY(), rpy.getZ());
@@ -720,4 +720,29 @@ KinematicModel UrdfLoader::loadFromString(const std::string& urdfXml, Report* ou
 
     fillStats(model, outReport);
     return model;
+}
+
+// TO DO:
+double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* attrName, double def, bool strict, Report* rep, const std::string& ctx = "") {
+
+}
+
+std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx = "") {
+
+}
+
+std::optional<KinematicModel::Geometry> UrdfLoader::parseGeometry(const tinyxml2::XMLElement* geometryEl, bool strict, Report* rep, const std::string& ctx = "") {
+
+}
+
+std::optional<KinematicModel::Collision> UrdfLoader::parseCollision(const tinyxml2::XMLElement* collisionEl, bool strict, Report* rep, const std::string& ctx = "") {
+
+}
+
+std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(const tinyxml2::XMLElement* materialEl, bool strict, Report* rep, const std::string& ctx = "") {
+
+}
+
+std::optional<KinematicModel::Visual> UrdfLoader::parseVisual(const tinyxml2::XMLElement* visualEl, bool strict, Report* rep, const std::string& ctx = "") {
+
 }

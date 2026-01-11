@@ -193,6 +193,13 @@ const KinematicModel::Link& KinematicModel::link(LinkId id) const {
     return links_[id];
 }
 
+KinematicModel::Link& KinematicModel::link(LinkId id) {
+    if (id >= links_.size())
+        throw std::out_of_range("[KinematicModel] Given link ID is invalid (out of range). ");
+
+    return links_[id];
+}
+
 const KinematicModel::Joint& KinematicModel::joint(JointId id) const {
     if (id >= joints_.size())
         throw std::out_of_range("[KinematicModel] Given joint id is invalid (out of range).");
@@ -361,6 +368,139 @@ void KinematicModel::validate() const {
     }
 
     constexpr double kEps = 1e-12;
+    constexpr double kEpsSym = 1e-9;
+    constexpr double kEpsRigid = 1e-9;
+
+    auto isFinite = [](double v) -> bool { return std::isfinite(v); };
+
+    auto checkFiniteVec3 = [&](const Vector3& v, const std::string& ctx) {
+        if (!isFinite(v.getX()) || !isFinite(v.getY()) || !isFinite(v.getZ())) {
+            throw std::logic_error("[KinematicModel] validate(): NaN/Inf in Vector3 for " + ctx + ".");
+        }
+        };
+
+    auto checkPositiveVec3 = [&](const Vector3& v, const std::string& ctx) {
+        checkFiniteVec3(v, ctx);
+        if (v.getX() <= 0.0 || v.getY() <= 0.0 || v.getZ() <= 0.0) {
+            throw std::logic_error("[KinematicModel] validate(): non-positive Vector3 for " + ctx + ".");
+        }
+        };
+
+    auto validateRigidTransform = [&](const Matrix4& T, const std::string& ctx) {
+        if (std::abs(T(3, 0)) > kEpsRigid ||
+            std::abs(T(3, 1)) > kEpsRigid ||
+            std::abs(T(3, 2)) > kEpsRigid ||
+            std::abs(T(3, 3) - 1.0) > kEpsRigid) {
+            throw std::logic_error("[KinematicModel] validate(): non-rigid Matrix4 (bottom row) for " + ctx + ".");
+        }
+
+        checkFiniteVec3(T.translation(), ctx + " (translation)");
+
+        const Matrix3 R = T.rotation();
+        if (!R.isOrthogonal(1e-6)) {
+            throw std::logic_error("[KinematicModel] validate(): non-orthonormal rotation for " + ctx + ".");
+        }
+        };
+
+    auto validateGeometry = [&](const Geometry& g, const std::string& ctx) {
+        switch (g.type) {
+        case Geometry::Type::Box:
+            checkPositiveVec3(g.boxSize, ctx + " (box size)");
+            break;
+
+        case Geometry::Type::Sphere:
+            if (!isFinite(g.radius) || g.radius <= 0.0) {
+                throw std::logic_error("[KinematicModel] validate(): invalid sphere radius for " + ctx + ".");
+            }
+            break;
+
+        case Geometry::Type::Cylinder:
+            if (!isFinite(g.radius) || g.radius <= 0.0) {
+                throw std::logic_error("[KinematicModel] validate(): invalid cylinder radius for " + ctx + ".");
+            }
+            if (!isFinite(g.length) || g.length <= 0.0) {
+                throw std::logic_error("[KinematicModel] validate(): invalid cylinder length for " + ctx + ".");
+            }
+            break;
+
+        case Geometry::Type::Mesh:
+            if (g.meshFilename.empty()) {
+                throw std::logic_error("[KinematicModel] validate(): mesh filename empty for " + ctx + ".");
+            }
+            checkPositiveVec3(g.meshScale, ctx + " (mesh scale)");
+            break;
+
+        default:
+            throw std::logic_error("[KinematicModel] validate(): unknown geometry type for " + ctx + ".");
+        }
+        };
+
+    auto validateMaterial = [&](const Material& m, const std::string& ctx) {
+        if (m.rgba.has_value()) {
+            const auto& c = m.rgba.value();
+            for (int i = 0; i < 4; ++i) {
+                if (!isFinite(c[static_cast<size_t>(i)])) {
+                    throw std::logic_error("[KinematicModel] validate(): NaN/Inf in rgba for " + ctx + ".");
+                }
+                if (c[static_cast<size_t>(i)] < 0.0 || c[static_cast<size_t>(i)] > 1.0) {
+                    throw std::logic_error("[KinematicModel] validate(): rgba out of range [0,1] for " + ctx + ".");
+                }
+            }
+        }
+        };
+
+    for (LinkId i = 0; i < links_.size(); ++i) {
+        const Link& L = links_[i];
+        const std::string baseCtx = "link '" + L.name + "'";
+
+        if (L.inertial.has_value()) {
+            const Inertial& I = L.inertial.value();
+
+            validateRigidTransform(I.origin, baseCtx + " inertial.origin");
+
+            if (!isFinite(I.mass) || I.mass <= 0.0) {
+                throw std::logic_error("[KinematicModel] validate(): invalid mass for " + baseCtx + ".");
+            }
+
+            for (size_t r = 0; r < 3; ++r) {
+                for (size_t c = 0; c < 3; ++c) {
+                    if (!isFinite(I.inertia(r, c))) {
+                        throw std::logic_error("[KinematicModel] validate(): NaN/Inf inertia element for " + baseCtx + ".");
+                    }
+                }
+            }
+
+            if (std::abs(I.inertia(0, 1) - I.inertia(1, 0)) > kEpsSym ||
+                std::abs(I.inertia(0, 2) - I.inertia(2, 0)) > kEpsSym ||
+                std::abs(I.inertia(1, 2) - I.inertia(2, 1)) > kEpsSym) {
+                throw std::logic_error("[KinematicModel] validate(): inertia tensor not symmetric for " + baseCtx + ".");
+            }
+
+            if (I.inertia(0, 0) <= 0.0 || I.inertia(1, 1) <= 0.0 || I.inertia(2, 2) <= 0.0) {
+                throw std::logic_error("[KinematicModel] validate(): inertia diagonal not positive for " + baseCtx + ".");
+            }
+        }
+
+        for (size_t k = 0; k < L.collisions.size(); ++k) {
+            const Collision& C = L.collisions[k];
+            const std::string ctx = baseCtx + " collision[" + std::to_string(k) + "]";
+
+            validateRigidTransform(C.origin, ctx + ".origin");
+            validateGeometry(C.geometry, ctx + ".geometry");
+        }
+
+        for (size_t k = 0; k < L.visuals.size(); ++k) {
+            const Visual& V = L.visuals[k];
+            const std::string ctx = baseCtx + " visual[" + std::to_string(k) + "]";
+
+            validateRigidTransform(V.origin, ctx + ".origin");
+            validateGeometry(V.geometry, ctx + ".geometry");
+
+            if (V.material.has_value()) {
+                validateMaterial(V.material.value(), ctx + ".material");
+            }
+        }
+    }
 
     for (JointId j = 0; j < joints_.size(); ++j) {
         const Joint& J = joints_[j];

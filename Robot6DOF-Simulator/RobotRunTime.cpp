@@ -145,7 +145,7 @@ void RobotRunTime::updateKinematicsIfNeeded_() const {
 
 const Matrix4& RobotRunTime::linkPoseWorld(LinkId link) const {
 
-	if (link > model_->activeJointCount() || link < 0)
+	if (link > model_->linkCount())
 		throw std::out_of_range("[RobotRuntime] linkPoseWorld(LinkId): link id out of range.");
 
 	updateKinematicsIfNeeded_();
