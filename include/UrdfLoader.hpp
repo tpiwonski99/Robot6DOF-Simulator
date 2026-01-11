@@ -118,4 +118,48 @@ private:
 		Report* rep,
 		const std::string& ctx = ""
 	);
+
+	static double parseDoubleAttr(
+		const tinyxml2::XMLElement* el,
+		const char* attrName,
+		double def,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
+
+	static std::optional<KinematicModel::Inertial> parseInertial(
+		const tinyxml2::XMLElement* linkEl,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
+
+	static std::optional<KinematicModel::Geometry> parseGeometry(
+		const tinyxml2::XMLElement* geometryEl,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
+
+	static std::optional<KinematicModel::Collision> parseCollision(
+		const tinyxml2::XMLElement* collisionEl,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
+
+	static std::optional<KinematicModel::Material> parseMaterial(
+		const tinyxml2::XMLElement* materialEl,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
+
+	static std::optional<KinematicModel::Visual> parseVisual(
+		const tinyxml2::XMLElement* visualEl,
+		bool strict,
+		Report* rep,
+		const std::string& ctx = ""
+	);
 };

@@ -4,11 +4,11 @@
 #include <unordered_map>
 #include <optional>
 #include <stdexcept>
+#include <string>
 
 #include "Vector3.hpp"
 #include "Matrix4.hpp"
 #include "Matrix.hpp"
-#include "Vector3.hpp"
 
 class KinematicModel {
 
@@ -23,9 +23,46 @@ public:
 		Prismatic
 	};
 
+	struct Material {
+		std::optional<std::string> name;
+		std::optional<std::array<double, 4>> rgba;
+	};
+
+	struct Geometry {
+		enum class Type { Box, Sphere, Cylinder, Mesh };
+		Type type = Type::Box;
+
+		Vector3 boxSize = Vector3(1.0, 1.0, 1.0); 
+		double radius = 1.0;                      
+		double length = 1.0;                      
+		std::string meshFilename;                 
+		Vector3 meshScale = Vector3(1.0, 1.0, 1.0);
+	};
+
+	struct Collision {
+		std::optional<std::string> name;
+		Matrix4 origin = Matrix4::identity();
+		Geometry geometry;
+	};
+
+	struct Visual {
+		std::optional<std::string> name;
+		Matrix4 origin = Matrix4::identity();
+		Geometry geometry;
+		std::optional<Material> material;
+	};
+
+	struct Inertial {
+		Matrix4 origin = Matrix4::identity();
+		double mass = 0.0;
+		Matrix3 inertia = Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
+	};
+
 	struct Link {
 		std::string name;
-		// TO DO: VISUALS, COLLISIONS, INTERTIAL
+		std::optional<Inertial> inertial;
+		std::vector<Collision> collisions;
+		std::vector<Visual> visuals;
 	};
 
 	struct JointLimit {
@@ -83,6 +120,7 @@ public:
 	JointId jointId(const std::string& name) const;
 
 	const Link& link(LinkId id) const;
+	Link& link(LinkId id);
 	const Joint& joint(JointId id) const;
 
 	std::size_t linkCount() const;
