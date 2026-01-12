@@ -723,9 +723,83 @@ KinematicModel UrdfLoader::loadFromString(const std::string& urdfXml, Report* ou
 }
 
 // TO DO:
-double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* attrName, double def, bool strict, Report* rep, const std::string& ctx = "") {
+double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* attrName, double def, bool strict, Report* rep, const std::string& ctx) {
+    if (attrName == nullptr || attrName[0] == '\0') 
+        throw std::invalid_argument("[UrdfLoader] parseDoubleAttr: attrName is null/empty. Context: " + ctx);
+    
+    const bool required = std::isnan(def);
 
+    if (el == nullptr) {
+        const std::string msg =
+            "[UrdfLoader] parseDoubleAttr: element is null while reading attribute '" +
+            std::string(attrName) + "'. Context: " + ctx;
+
+        if (strict || required) 
+            throw std::runtime_error(msg);
+        
+
+        warn(rep, msg);
+        return def;
+    }
+
+    const char* s = el->Attribute(attrName);
+    if (s == nullptr || s[0] == '\0') {
+        const std::string msg =
+            "[UrdfLoader] Missing/empty double attribute '" + std::string(attrName) +
+            "'. Context: " + ctx;
+
+        if (strict || required) 
+            throw std::runtime_error(msg);
+        
+
+        warn(rep, msg);
+        return def;
+    }
+
+    double v = def;
+
+    try {
+        std::size_t pos = 0;
+        const std::string str(s);
+
+        v = std::stod(str, &pos);
+
+        for (; pos < str.size(); ++pos) {
+            const unsigned char ch = static_cast<unsigned char>(str[pos]);
+            if (!std::isspace(ch))
+                throw std::runtime_error("extra tokens");
+            
+        }
+    }
+    catch (const std::exception&) {
+        const std::string msg =
+            "[UrdfLoader] Cannot parse double attribute '" + std::string(attrName) +
+            "' from '" + std::string(s) + "'. Context: " + ctx;
+
+        if (strict || required) 
+            throw std::runtime_error(msg);
+        
+
+        warn(rep, msg);
+        return def;
+    }
+
+    if (!std::isfinite(v)) {
+        const std::string msg =
+            "[UrdfLoader] Non-finite double attribute '" + std::string(attrName) +
+            "' = '" + std::string(s) + "'. Context: " + ctx;
+
+        if (strict || required) 
+            throw std::runtime_error(msg);
+        
+
+        warn(rep, msg);
+        return def;
+    }
+
+    return v;
 }
+
 
 std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx = "") {
 
