@@ -722,7 +722,6 @@ KinematicModel UrdfLoader::loadFromString(const std::string& urdfXml, Report* ou
     return model;
 }
 
-// TO DO:
 double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* attrName, double def, bool strict, Report* rep, const std::string& ctx) {
     if (attrName == nullptr || attrName[0] == '\0') 
         throw std::invalid_argument("[UrdfLoader] parseDoubleAttr: attrName is null/empty. Context: " + ctx);
@@ -802,7 +801,103 @@ double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* a
 
 
 std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx = "") {
+    
+    if (!linkEl) {
+        const std::string msg = "[UrdfLoader] parseInertial: link element is null.";
 
+        if (strict) throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return;
+    }
+
+    const tinyxml2::XMLElement* inertialEl = linkEl->FirstChildElement("inertial");
+
+    if (!inertialEl) return;
+
+    const std::string ictx = ctx.empty() ? "inertial" : (ctx + " / inertial");
+
+    auto requiredDouble = [&](const tinyxml2::XMLElement* el, const char* attr, const std::string& aCtx) -> double {
+        try {
+            return parseDoubleAttr(el, attr, std::numeric_limits<double>::quiet_NaN(), strict, rep, aCtx);
+        }
+        catch (const std::exception& e) {
+            const std::string msg = "[UrdfLoader] " + aCtx + ": " + e.what();
+            if (strict) {
+                throw;
+            }
+            warn(rep, msg);
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    };
+
+
+    KinematicModel::Inertial out;
+    out.origin = parseOrigin(inertialEl, strict, rep, ictx);
+
+    const tinyxml2::XMLElement* massEl = requiredChild(inertialEl, "mass", strict, rep, ictx + " / mass");
+
+    if (!massEl)
+        return;
+
+    out.mass = requiredDouble(massEl, "value", ictx + " / mass@value");
+
+    if (!std::isfinite(out.mass) || out.mass <= 0.0) {
+        const std::string msg = "[UrdfLoader] Invalid inertial mass (must be finite and > 0). mass=" + std::to_string(out.mass) + ". Context: " + ictx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    const tinyxml2::XMLElement* inertiaEl = requiredChild(inertialEl, "inertia", strict, rep, ictx + " / inertia");
+
+    if (!inertiaEl)
+        return;
+
+    const double ixx = requiredDouble(inertiaEl, "ixx", ictx + " / inertia@ixx");
+    const double ixy = requiredDouble(inertiaEl, "ixy", ictx + " / inertia@ixy");
+    const double ixz = requiredDouble(inertiaEl, "ixz", ictx + " / inertia@ixz");
+    const double iyy = requiredDouble(inertiaEl, "iyy", ictx + " / inertia@iyy");
+    const double iyz = requiredDouble(inertiaEl, "iyz", ictx + " / inertia@iyz");
+    const double izz = requiredDouble(inertiaEl, "izz", ictx + " / inertia@izz");
+
+    if (!std::isfinite(ixx) || !std::isfinite(ixy) || !std::isfinite(ixz) ||
+        !std::isfinite(iyy) || !std::isfinite(iyz) || !std::isfinite(izz)) {
+
+        const std::string msg = "[UrdfLoader] Invalid inertial inertia tensor (NaN/Inf). Context: " + ictx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    out.inertia = Matrix3(
+        ixx, ixy, ixz,
+        ixy, iyy, iyz,
+        ixz, iyz, izz
+    );
+
+    if (out.inertia(0, 0) <= 0.0 || out.inertia(1, 1) <= 0.0 || out.inertia(2, 2) <= 0.0) {
+        const std::string msg =
+            "[UrdfLoader] Invalid inertia diagonal (must be > 0). "
+            "ixx=" + std::to_string(out.inertia(0, 0)) +
+            ", iyy=" + std::to_string(out.inertia(1, 1)) +
+            ", izz=" + std::to_string(out.inertia(2, 2)) +
+            ". Context: " + ictx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+    
+    return out;
 }
 
 std::optional<KinematicModel::Geometry> UrdfLoader::parseGeometry(const tinyxml2::XMLElement* geometryEl, bool strict, Report* rep, const std::string& ctx = "") {
