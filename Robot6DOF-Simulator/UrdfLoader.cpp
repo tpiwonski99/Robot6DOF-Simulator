@@ -800,7 +800,7 @@ double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* a
 }
 
 
-std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx = "") {
+std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx) {
     
     if (!linkEl) {
         const std::string msg = "[UrdfLoader] parseInertial: link element is null.";
@@ -900,18 +900,99 @@ std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2
     return out;
 }
 
-std::optional<KinematicModel::Geometry> UrdfLoader::parseGeometry(const tinyxml2::XMLElement* geometryEl, bool strict, Report* rep, const std::string& ctx = "") {
+std::optional<KinematicModel::Geometry> UrdfLoader::parseGeometry(const tinyxml2::XMLElement* geometryEl, bool strict, Report* rep, const std::string& ctx) {
+    // TODO 
+}
+
+std::optional<KinematicModel::Collision> UrdfLoader::parseCollision(const tinyxml2::XMLElement* collisionEl, bool strict, Report* rep, const std::string& ctx) {
 
 }
 
-std::optional<KinematicModel::Collision> UrdfLoader::parseCollision(const tinyxml2::XMLElement* collisionEl, bool strict, Report* rep, const std::string& ctx = "") {
+std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(
+    const tinyxml2::XMLElement* materialEl,
+    bool strict,
+    Report* rep,
+    const std::string& ctx
+) {
+    if (materialEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseMaterial: material element is null. Context: " + ctx;
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+        warn(rep, msg);
+        return std::nullopt;
+    }
 
+    const std::string mctx = ctx.empty() ? "material" : (ctx + " / material");
+
+    KinematicModel::Material out;
+
+    if (const char* n = materialEl->Attribute("name"); n != nullptr && n[0] != '\0') {
+        out.name = std::string(n);
+    }
+
+    const tinyxml2::XMLElement* colorEl = optionalChild(materialEl, "color");
+    if (colorEl != nullptr) {
+        const char* rgbaText = colorEl->Attribute("rgba");
+        if (rgbaText == nullptr || rgbaText[0] == '\0') {
+            const std::string msg = "[UrdfLoader] parseMaterial: <color> has missing/empty 'rgba'. Context: " + mctx;
+            if (strict) {
+                throw std::runtime_error(msg);
+            }
+            warn(rep, msg);
+        }
+        else {
+            std::array<double, 4> c{};
+            std::istringstream iss(std::string(rgbaText));
+            if (!(iss >> c[0] >> c[1] >> c[2] >> c[3])) {
+                const std::string msg =
+                    "[UrdfLoader] parseMaterial: cannot parse rgba='" + std::string(rgbaText) + "'. Context: " + mctx;
+                if (strict) {
+                    throw std::runtime_error(msg);
+                }
+                warn(rep, msg);
+            }
+            else {
+                char extra = 0;
+                if (iss >> extra) {
+                    const std::string msg =
+                        "[UrdfLoader] parseMaterial: extra tokens in rgba='" + std::string(rgbaText) + "'. Context: " + mctx;
+                    if (strict) {
+                        throw std::runtime_error(msg);
+                    }
+                    warn(rep, msg);
+                }
+                else {
+                    bool ok = true;
+                    for (int i = 0; i < 4; ++i) {
+                        if (!std::isfinite(c[static_cast<size_t>(i)])) ok = false;
+                        if (c[static_cast<size_t>(i)] < 0.0 || c[static_cast<size_t>(i)] > 1.0) ok = false;
+                    }
+                    if (!ok) {
+                        const std::string msg =
+                            "[UrdfLoader] parseMaterial: rgba out of range or non-finite. rgba='" + std::string(rgbaText) +
+                            "'. Context: " + mctx;
+                        if (strict) {
+                            throw std::runtime_error(msg);
+                        }
+                        warn(rep, msg);
+                    }
+                    else {
+                        out.rgba = c;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!out.name.has_value() && !out.rgba.has_value()) {
+        return std::nullopt;
+    }
+
+    return out;
 }
 
-std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(const tinyxml2::XMLElement* materialEl, bool strict, Report* rep, const std::string& ctx = "") {
 
-}
-
-std::optional<KinematicModel::Visual> UrdfLoader::parseVisual(const tinyxml2::XMLElement* visualEl, bool strict, Report* rep, const std::string& ctx = "") {
+std::optional<KinematicModel::Visual> UrdfLoader::parseVisual(const tinyxml2::XMLElement* visualEl, bool strict, Report* rep, const std::string& ctx) {
 
 }
