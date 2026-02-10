@@ -99,9 +99,7 @@ void Vector3::normalize() {
 
 bool Vector3::empty() const {
 
-    double eps = 1e-12;
+    constexpr double eps = 1e-12;
 
-    if (x_ < eps && y_ < eps && z_ < eps) return false;
-
-    return true;
+    return std::abs(x_) < eps && std::abs(y_) < eps && std::abs(z_) < eps;
 }

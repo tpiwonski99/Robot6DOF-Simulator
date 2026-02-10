@@ -95,7 +95,7 @@ Matrix Matrix::operator* (double s) const {
 
 Vector3 Matrix::operator*(const Vector3& v) const {
 
-	if (rows_ == 3 && cols_ == 3)
+	if (!(rows_ == 3 && cols_ == 3))
 		throw std::runtime_error("[Matrix] Multiplication by a vector is only possible in a 3x3 matrix.");
 
 	return Vector3(

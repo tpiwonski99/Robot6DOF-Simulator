@@ -337,41 +337,77 @@ std::string UrdfLoader::readRobotName(const tinyxml2::XMLElement* robotEl) {
     return std::string(name);
 }
 
-void UrdfLoader::parseLinks(const tinyxml2::XMLElement* robotEl, KinematicModel& model, Report* rep) const {
-
+void UrdfLoader::parseLinks(const tinyxml2::XMLElement* robotEl, KinematicModel& model, Report* rep) const
+{
     if (!robotEl) {
         const std::string msg = "[UrdfLoader] parseLinks: robot element is null.";
-        
-        if (opt_.strict)
-            throw std::runtime_error(msg)
-                ;
+        if (opt_.strict) throw std::runtime_error(msg);
         warn(rep, msg);
         return;
     }
 
-    for (const tinyxml2::XMLElement* linkEl = robotEl->FirstChildElement("link"); linkEl != nullptr; linkEl = linkEl->NextSiblingElement("link")) {
-        
-        const std::string ctx = "link";
+    for (const tinyxml2::XMLElement* linkEl = robotEl->FirstChildElement("link");
+        linkEl != nullptr;
+        linkEl = linkEl->NextSiblingElement("link"))
+    {
+        const char* linkNameC = linkEl->Attribute("name");
+        const std::string linkName = (linkNameC ? std::string(linkNameC) : "");
+        const std::string ctx = linkName.empty() ? "link" : ("link: " + linkName);
 
         const std::string name = requiredAttr(linkEl, "name", opt_.strict, rep, ctx);
-
-        if (name.empty())
+        if (name.empty()) {
             continue;
-
-        try {
-            model.addLink(name);
         }
 
+        KinematicModel::LinkId lid = 0;
+        try {
+            lid = model.addLink(name);
+        }
         catch (const std::exception& e) {
             const std::string msg =
                 "[UrdfLoader] parseLinks: cannot add link '" + name + "': " + e.what();
-
-            if (opt_.strict) {
-                throw;
-            }
-
+            if (opt_.strict) throw;
             warn(rep, msg);
             continue;
+        }
+
+        KinematicModel::Link& L = model.link(lid);
+
+        {
+            const tinyxml2::XMLElement* inertialEl = optionalChild(linkEl, "inertial");
+            if (inertialEl && inertialEl->NextSiblingElement("inertial")) {
+                warn(rep, "[UrdfLoader] " + ctx + ": multiple <inertial> tags found; using the first one.");
+            }
+
+            auto inertialOpt = parseInertial(linkEl, opt_.strict, rep, ctx + " / inertial");
+            if (inertialOpt.has_value()) {
+                L.inertial = *inertialOpt;
+            }
+            else {
+                L.inertial = std::nullopt;
+            }
+        }
+
+        L.collisions.clear();
+        for (const tinyxml2::XMLElement* colEl = linkEl->FirstChildElement("collision");
+            colEl != nullptr;
+            colEl = colEl->NextSiblingElement("collision"))
+        {
+            auto colOpt = parseCollision(colEl, opt_.strict, rep, ctx + " / collision");
+            if (colOpt.has_value()) {
+                L.collisions.push_back(*colOpt);
+            }
+        }
+
+        L.visuals.clear();
+        for (const tinyxml2::XMLElement* visEl = linkEl->FirstChildElement("visual");
+            visEl != nullptr;
+            visEl = visEl->NextSiblingElement("visual"))
+        {
+            auto visOpt = parseVisual(visEl, opt_.strict, rep, ctx + " / visual");
+            if (visOpt.has_value()) {
+                L.visuals.push_back(*visOpt);
+            }
         }
     }
 }
@@ -1340,10 +1376,10 @@ std::optional<KinematicModel::Visual> UrdfLoader::parseVisual(const tinyxml2::XM
         return std::nullopt;
     }
 
-    auto geomOpt = parseGeometry(geometryEl, strict, rep, ctx);
+    auto geomOpt = parseGeometry(geometryEl, strict, rep, vctx);
 
     if (!geomOpt.has_value()) {
-        const std::string msg = "[UrdfLoader] parseVisual: geometry element failed to parse. Context: " + ctx;
+        const std::string msg = "[UrdfLoader] parseVisual: geometry element failed to parse. Context: " + vctx;
 
         if (strict)
             throw std::runtime_error(msg);

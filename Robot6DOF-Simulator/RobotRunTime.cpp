@@ -39,6 +39,10 @@ std::size_t RobotRunTime::dof() const {
 	return activeJoints_.size();
 }
 
+const std::vector<double>& RobotRunTime::q() const { return q_; }
+
+const std::vector<double>& RobotRunTime::qd() const { return qd_; }
+
 void RobotRunTime::setQ(const std::vector<double>& q) {
 
 	if (q.size() != activeJoints_.size())
@@ -145,7 +149,7 @@ void RobotRunTime::updateKinematicsIfNeeded_() const {
 
 const Matrix4& RobotRunTime::linkPoseWorld(LinkId link) const {
 
-	if (link > model_->linkCount())
+	if (link >= model_->linkCount())
 		throw std::out_of_range("[RobotRuntime] linkPoseWorld(LinkId): link id out of range.");
 
 	updateKinematicsIfNeeded_();
