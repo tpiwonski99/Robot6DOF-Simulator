@@ -799,6 +799,90 @@ double UrdfLoader::parseDoubleAttr(const tinyxml2::XMLElement* el, const char* a
     return v;
 }
 
+Vector3 UrdfLoader::parseTripleAttr(const tinyxml2::XMLElement* El, const char* attrName, bool strict, Report* rep, const std::string& ctx) {
+    const Vector3 def(1.0, 1.0, 1.0);
+
+    if (attrName == nullptr || attrName[0] == '\0') {
+        throw std::invalid_argument("[UrdfLoader] parseTripleAttr: attrName is null/empty. Context: " + ctx);
+    }
+
+    if (El == nullptr) {
+        const std::string msg =
+            "[UrdfLoader] parseTripleAttr: Given element is null while reading '" +
+            std::string(attrName) + "'. Context: " + ctx;
+
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+
+        warn(rep, msg);
+        return def;
+    }
+
+    const char* value = El->Attribute(attrName);
+    if (value == nullptr || value[0] == '\0') {
+        const std::string msg =
+            "[UrdfLoader] parseTripleAttr: Missing/empty attribute '" +
+            std::string(attrName) + "'. Context: " + ctx;
+
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+
+        warn(rep, msg);
+        return def;
+    }
+
+    double a = 0.0, b = 0.0, c = 0.0;
+
+    std::istringstream iss{ std::string(value) };
+
+    if (!(iss >> a >> b >> c)) {
+        const std::string msg =
+            "[UrdfLoader] parseTripleAttr: Cannot parse 3 doubles from '" +
+            std::string(value) + "' for '" + std::string(attrName) +
+            "'. Context: " + ctx;
+
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+
+        warn(rep, msg);
+        return def;
+    }
+
+    char extra = 0;
+    if (iss >> extra) {
+        const std::string msg =
+            "[UrdfLoader] parseTripleAttr: Extra tokens in '" +
+            std::string(value) + "' for '" + std::string(attrName) +
+            "'. Context: " + ctx;
+
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+
+        warn(rep, msg);
+        return def;
+    }
+
+    if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(c) ||
+        a <= 0.0 || b <= 0.0 || c <= 0.0) {
+        const std::string msg =
+            "[UrdfLoader] parseTripleAttr: Non-finite or non-positive triple '" +
+            std::string(value) + "' for '" + std::string(attrName) +
+            "'. Context: " + ctx;
+
+        if (strict) {
+            throw std::runtime_error(msg);
+        }
+
+        warn(rep, msg);
+        return def;
+    }
+
+    return Vector3(a, b, c);
+}
 
 std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2::XMLElement* linkEl, bool strict, Report* rep, const std::string& ctx) {
     
@@ -901,19 +985,249 @@ std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2
 }
 
 std::optional<KinematicModel::Geometry> UrdfLoader::parseGeometry(const tinyxml2::XMLElement* geometryEl, bool strict, Report* rep, const std::string& ctx) {
-    // TODO 
+    const std::string gctx = ctx.empty() ? "geometry" : (ctx + " / geometry");
+
+    if (geometryEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseGeometry: geometry element is null. Context: " + gctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    KinematicModel::Geometry out;
+
+    std::array<const char*, 4> types{ "mesh", "box", "sphere", "cylinder" };
+
+    const tinyxml2::XMLElement* typeEl = nullptr;
+    bool parsedType = false;
+    std::string typeName;
+
+    for (std::size_t i = 0; i < types.size(); ++i) {
+        const tinyxml2::XMLElement* typeElem = optionalChild(geometryEl, types[i]);
+
+        if (typeElem != nullptr && !parsedType) {
+            typeEl = typeElem;
+            typeName = types[i];
+            parsedType = true;
+        }
+        else if (typeElem != nullptr && parsedType) {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: multiple geometry types under <geometry> (expected exactly one). Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+    }
+
+    if (typeEl == nullptr) {
+        const std::string msg =
+            "[UrdfLoader] parseGeometry: no supported geometry child (mesh/box/sphere/cylinder). Context: " + gctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    if (typeName == "mesh") {
+        const char* mFileName = typeEl->Attribute("filename");
+        if (mFileName == nullptr || mFileName[0] == '\0') {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: <mesh> missing/empty filename. Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        out.meshFilename = mFileName;
+
+        const char* sc = typeEl->Attribute("scale");
+        if (sc != nullptr && sc[0] != '\0') {
+            out.meshScale = parseTripleAttr(typeEl, "scale", strict, rep, gctx + " / mesh@scale");
+        }
+        else {
+            out.meshScale = Vector3(1.0, 1.0, 1.0);
+        }
+
+        out.type = KinematicModel::Geometry::Type::Mesh;
+        return out;
+    }
+
+    if (typeName == "box") {
+        const char* sz = typeEl->Attribute("size");
+        if (sz == nullptr || sz[0] == '\0') {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: <box> missing/empty size. Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        out.boxSize = parseTripleAttr(typeEl, "size", strict, rep, gctx + " / box@size");
+        out.type = KinematicModel::Geometry::Type::Box;
+        return out;
+    }
+
+    if (typeName == "sphere") {
+        const char* r = typeEl->Attribute("radius");
+        if (r == nullptr || r[0] == '\0') {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: <sphere> missing/empty radius. Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        const double radius = parseDoubleAttr(
+            typeEl, "radius",
+            std::numeric_limits<double>::quiet_NaN(),
+            strict, rep, gctx + " / sphere@radius"
+        );
+
+        if (!std::isfinite(radius) || radius <= 0.0) {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: invalid sphere radius (must be finite and > 0). Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        out.radius = radius;
+        out.type = KinematicModel::Geometry::Type::Sphere;
+        return out;
+    }
+
+    if (typeName == "cylinder") {
+        const char* r = typeEl->Attribute("radius");
+        const char* l = typeEl->Attribute("length");
+
+        if (r == nullptr || r[0] == '\0' || l == nullptr || l[0] == '\0') {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: <cylinder> missing/empty radius or length. Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        const double radius = parseDoubleAttr(
+            typeEl, "radius",
+            std::numeric_limits<double>::quiet_NaN(),
+            strict, rep, gctx + " / cylinder@radius"
+        );
+        const double length = parseDoubleAttr(
+            typeEl, "length",
+            std::numeric_limits<double>::quiet_NaN(),
+            strict, rep, gctx + " / cylinder@length"
+        );
+
+        if (!std::isfinite(radius) || radius <= 0.0 || !std::isfinite(length) || length <= 0.0) {
+            const std::string msg =
+                "[UrdfLoader] parseGeometry: invalid cylinder radius/length (must be finite and > 0). Context: " + gctx;
+
+            if (strict)
+                throw std::runtime_error(msg);
+
+            warn(rep, msg);
+            return std::nullopt;
+        }
+
+        out.radius = radius;
+        out.length = length;
+        out.type = KinematicModel::Geometry::Type::Cylinder;
+        return out;
+    }
+
+    const std::string msg =
+        "[UrdfLoader] parseGeometry: unreachable/unknown geometry type '" + typeName + "'. Context: " + gctx;
+
+    if (strict)
+        throw std::runtime_error(msg);
+
+    warn(rep, msg);
+    return std::nullopt;
 }
 
 std::optional<KinematicModel::Collision> UrdfLoader::parseCollision(const tinyxml2::XMLElement* collisionEl, bool strict, Report* rep, const std::string& ctx) {
+    const std::string cctx = ctx.empty() ? "collision" : (ctx + " / collision");
 
+    if (collisionEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseCollision: collision element is null. Context: " + cctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    KinematicModel::Collision out;
+
+    if (const char* n = collisionEl->Attribute("name"); n != nullptr && n[0] != '\0') {
+        out.name = std::string(n);
+    }
+
+    out.origin = parseOrigin(collisionEl, strict, rep, cctx);
+
+    const tinyxml2::XMLElement* geometryEl = optionalChild(collisionEl, "geometry");
+    if (geometryEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseCollision: missing <geometry> in <collision>. Context: " + cctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    if (geometryEl->NextSiblingElement("geometry") != nullptr) {
+        const std::string msg = "[UrdfLoader] parseCollision: multiple <geometry> tags inside <collision> (expected one). Context: " + cctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    auto geomOpt = parseGeometry(geometryEl, strict, rep, cctx + " / geometry");
+    if (!geomOpt.has_value()) {
+        const std::string msg = "[UrdfLoader] parseCollision: failed to parse <geometry>. Context: " + cctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    out.geometry = *geomOpt;
+
+    return out;
 }
 
-std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(
-    const tinyxml2::XMLElement* materialEl,
-    bool strict,
-    Report* rep,
-    const std::string& ctx
-) {
+std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(const tinyxml2::XMLElement* materialEl, bool strict, Report* rep, const std::string& ctx) {
     if (materialEl == nullptr) {
         const std::string msg = "[UrdfLoader] parseMaterial: material element is null. Context: " + ctx;
         if (strict) {
@@ -943,7 +1257,7 @@ std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(
         }
         else {
             std::array<double, 4> c{};
-            std::istringstream iss(std::string(rgbaText));
+            std::istringstream iss{ std::string(rgbaText) };
             if (!(iss >> c[0] >> c[1] >> c[2] >> c[3])) {
                 const std::string msg =
                     "[UrdfLoader] parseMaterial: cannot parse rgba='" + std::string(rgbaText) + "'. Context: " + mctx;
@@ -992,7 +1306,71 @@ std::optional<KinematicModel::Material> UrdfLoader::parseMaterial(
     return out;
 }
 
-
 std::optional<KinematicModel::Visual> UrdfLoader::parseVisual(const tinyxml2::XMLElement* visualEl, bool strict, Report* rep, const std::string& ctx) {
 
+    if (visualEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseVisual: visual element is null. Context: " + ctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    const std::string vctx = ctx.empty() ? "visual" : (ctx + " / visual");
+
+    KinematicModel::Visual out; 
+
+    if (const char* n = visualEl->Attribute("name"); n != nullptr && n[0] != '\0') {
+        out.name = std::string(n);
+    }
+
+    out.origin = parseOrigin(visualEl, strict, rep, vctx);
+
+    const tinyxml2::XMLElement* geometryEl = optionalChild(visualEl, "geometry");
+
+    if (geometryEl == nullptr) {
+        const std::string msg = "[UrdfLoader] parseVisual: geometry element in visual tag is null. Context: " + vctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    auto geomOpt = parseGeometry(geometryEl, strict, rep, ctx);
+
+    if (!geomOpt.has_value()) {
+        const std::string msg = "[UrdfLoader] parseVisual: geometry element failed to parse. Context: " + ctx;
+
+        if (strict)
+            throw std::runtime_error(msg);
+
+        warn(rep, msg);
+        return std::nullopt;
+    }
+
+    out.geometry = *geomOpt;
+
+    const tinyxml2::XMLElement* materialEl = optionalChild(visualEl, "material");
+    if (materialEl != nullptr) {
+
+        auto materialOpt = parseMaterial(materialEl, strict, rep, vctx + " / material");
+        
+        if (materialOpt.has_value()) {
+            out.material = *materialOpt;
+        }
+        else {
+            warn(rep, "[UrdfLoader] parseVisual: failed to parse <material> (ignored). Context: " + vctx);
+            out.material = std::nullopt;
+        }
+    }
+
+    else {
+        out.material = std::nullopt;
+    }
+
+    return out;
 }

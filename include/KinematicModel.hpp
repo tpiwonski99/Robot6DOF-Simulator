@@ -34,7 +34,7 @@ public:
 
 		Vector3 boxSize = Vector3(1.0, 1.0, 1.0); 
 		double radius = 1.0;                      
-		double length = 1.0;                      
+		double length = 1.0;
 		std::string meshFilename;                 
 		Vector3 meshScale = Vector3(1.0, 1.0, 1.0);
 	};

@@ -128,6 +128,13 @@ private:
 		const std::string& ctx = ""
 	);
 
+	static Vector3 parseTripleAttr(
+		const tinyxml2::XMLElement* El, 
+		const char* attrName, bool strict, 
+		Report* rep, 
+		const std::string& ctx
+	);
+
 	static std::optional<KinematicModel::Inertial> parseInertial(
 		const tinyxml2::XMLElement* linkEl,
 		bool strict,
