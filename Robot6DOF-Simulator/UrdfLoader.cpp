@@ -151,7 +151,7 @@ KinematicModel::JointType UrdfLoader::parseJointType(const std::string& typeStr,
     throw std::runtime_error("[UrdfLoader] Unsupported joint type: " + typeStr);
 }
 
-Matrix4 UrdfLoader::parseOrigin(const tinyxml2::XMLElement* jointEl, bool strict, Report* rep, const std::string& ctx = "") {
+Matrix4 UrdfLoader::parseOrigin(const tinyxml2::XMLElement* jointEl, bool strict, Report* rep, const std::string& ctx) {
 
     if (jointEl == nullptr) {
         const std::string msg = "[UrdfLoader] parseOrigin: joint element is null. Context: " + ctx;
@@ -188,7 +188,7 @@ Matrix4 UrdfLoader::parseOrigin(const tinyxml2::XMLElement* jointEl, bool strict
     return Matrix4(R, t);
 }
 
-Vector3 UrdfLoader::parseAxis(const tinyxml2::XMLElement* jointEl, bool normalizeAxis, bool strict, Report* rep, const std::string& ctx = "") {
+Vector3 UrdfLoader::parseAxis(const tinyxml2::XMLElement* jointEl, bool normalizeAxis, bool strict, Report* rep, const std::string& ctx) {
     const Vector3 defAxis(1.0, 0.0, 0.0);
 
     if (!jointEl) {
@@ -235,7 +235,7 @@ Vector3 UrdfLoader::parseAxis(const tinyxml2::XMLElement* jointEl, bool normaliz
     return axis;
 }
 
-void UrdfLoader::parseLimit(const tinyxml2::XMLElement* jointEl, KinematicModel::JointType jointType, KinematicModel::JointLimit& outLimit, bool strict, Report* rep, const std::string& ctx = "") {
+void UrdfLoader::parseLimit(const tinyxml2::XMLElement* jointEl, KinematicModel::JointType jointType, KinematicModel::JointLimit& outLimit, bool strict, Report* rep, const std::string& ctx) {
     outLimit.hasLimits = false;
     outLimit.lower = 0.0;
     outLimit.upper = 0.0;
@@ -928,12 +928,12 @@ std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2
         if (strict) throw std::runtime_error(msg);
 
         warn(rep, msg);
-        return;
+        return std::nullopt;
     }
 
     const tinyxml2::XMLElement* inertialEl = linkEl->FirstChildElement("inertial");
 
-    if (!inertialEl) return;
+    if (!inertialEl) return std::nullopt;
 
     const std::string ictx = ctx.empty() ? "inertial" : (ctx + " / inertial");
 
@@ -958,7 +958,7 @@ std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2
     const tinyxml2::XMLElement* massEl = requiredChild(inertialEl, "mass", strict, rep, ictx + " / mass");
 
     if (!massEl)
-        return;
+        return std::nullopt;
 
     out.mass = requiredDouble(massEl, "value", ictx + " / mass@value");
 
@@ -975,7 +975,7 @@ std::optional<KinematicModel::Inertial> UrdfLoader::parseInertial(const tinyxml2
     const tinyxml2::XMLElement* inertiaEl = requiredChild(inertialEl, "inertia", strict, rep, ictx + " / inertia");
 
     if (!inertiaEl)
-        return;
+        return std::nullopt;
 
     const double ixx = requiredDouble(inertiaEl, "ixx", ictx + " / inertia@ixx");
     const double ixy = requiredDouble(inertiaEl, "ixy", ictx + " / inertia@ixy");

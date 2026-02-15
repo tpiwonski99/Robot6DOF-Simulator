@@ -26,6 +26,9 @@
     <ClInclude Include="..\include\RobotRunTime.hpp" />
     <ClInclude Include="..\include\UrdfLoader.hpp" />
     <ClInclude Include="..\include\Vector3.hpp" />
+    <ClInclude Include="..\include\viewer\CameraOrbit.hpp" />
+    <ClInclude Include="..\include\viewer\InputState.hpp" />
+    <ClInclude Include="..\include\viewer\ViewerApp.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinematicModel.cpp" />
@@ -36,6 +39,9 @@
     <ClCompile Include="RobotRunTime.cpp" />
     <ClCompile Include="UrdfLoader.cpp" />
     <ClCompile Include="Vector3.cpp" />
+    <ClCompile Include="viewer\CameraOrbit.cpp" />
+    <ClCompile Include="viewer\InputState.cpp" />
+    <ClCompile Include="viewer\ViewerApp.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -121,14 +127,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:/Projects/Robot6DOF-Simulator/include;$(ROBOT_SIM_DEV)tinyxml2\include;C:/LibPack_6DOF_SIM_PROJECT/Libs/tinyxml2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:/Projects/Robot6DOF-Simulator/include;$(ROBOT_SIM_DEV)tinyxml2\include;$(ROBOT_SIM_DEV)GLFW\include;C:/LibPack_6DOF_SIM_PROJECT/Libs/tinyxml2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ROBOT_SIM_DEV_)tinyxml2\lib;C:/LibPack_6DOF_SIM_PROJECT/Libs/tinyxml2/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ROBOT_SIM_DEV_)tinyxml2\lib;C:/LibPack_6DOF_SIM_PROJECT/Libs/GLFW/lib;C:/LibPack_6DOF_SIM_PROJECT/Libs/tinyxml2/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml2.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

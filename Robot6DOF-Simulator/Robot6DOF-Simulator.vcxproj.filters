@@ -13,6 +13,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\viewer">
+      <UniqueIdentifier>{6280d6da-6fe8-4a9e-a6cd-45072eee11c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\viewer">
+      <UniqueIdentifier>{b0853e9d-4854-4013-b03e-01a9a328b8c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Matrix.hpp">
@@ -35,6 +41,15 @@
     </ClInclude>
     <ClInclude Include="..\include\RobotRunTime.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\viewer\CameraOrbit.hpp">
+      <Filter>Header Files\viewer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\viewer\InputState.hpp">
+      <Filter>Header Files\viewer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\viewer\ViewerApp.hpp">
+      <Filter>Header Files\viewer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +76,15 @@
     </ClCompile>
     <ClCompile Include="RobotRunTime.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="viewer\CameraOrbit.cpp">
+      <Filter>Source Files\viewer</Filter>
+    </ClCompile>
+    <ClCompile Include="viewer\InputState.cpp">
+      <Filter>Source Files\viewer</Filter>
+    </ClCompile>
+    <ClCompile Include="viewer\ViewerApp.cpp">
+      <Filter>Source Files\viewer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
