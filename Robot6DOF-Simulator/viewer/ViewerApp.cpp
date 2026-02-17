@@ -67,3 +67,48 @@ void ViewerApp::keyCallback_(GLFWwindow* window, int key, int scancode, int acti
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 }
+
+bool ViewerApp::loadRobot_() {
+	if (cfg_.urdfPath.empty()) {
+		std::cerr << "[ViewerApp] loadRobot_: cfg_.urdfPath is empty.\n";
+		return false;
+	}
+
+	try {
+		UrdfLoader::Options opt;
+		opt.strict = cfg_.strictUrdf;
+
+		UrdfLoader loader(opt);
+
+		UrdfLoader::Report rep;
+		KinematicModel tmp = loader.loadFromFile(cfg_.urdfPath, &rep);
+
+		tmp.validate();
+
+		model_ = std::make_shared<KinematicModel>(std::move(tmp));
+
+		runtime_ = std::make_unique<RobotRunTime>(model_);
+
+		std::vector<double> q0(runtime_->dof(), 0.0);
+		runtime_->setQ(q0);
+
+		std::cout << "[URDF] robotName=" << rep.robotName
+			<< " root=" << rep.rootLinkName
+			<< " links=" << rep.links
+			<< " joints=" << rep.joints
+			<< " activeJoints=" << rep.activeJoints
+			<< "\n";
+
+		for (const auto& w : rep.warnings) {
+			std::cout << "[URDF warning] " << w << "\n";
+		}
+
+		return true;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "[ViewerApp] loadRobot_ failed: " << e.what() << "\n";
+		model_.reset();
+		runtime_.reset();
+		return false;
+	}
+}
